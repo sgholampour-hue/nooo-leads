@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, AlertTriangle, Plus, Menu, X } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import noooLogo from "@/assets/nooo-logo.png";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -16,10 +17,9 @@ export function AppSidebar() {
 
   const sidebarContent = (
     <>
-      <div className="p-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">NOOO</h1>
-          <p className="text-xs opacity-80 mt-0.5">Leads Dashboard</p>
+      <div className="p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={noooLogo} alt="NOOO Logo" className="h-10 brightness-0 invert" />
         </div>
         <Button
           variant="ghost"
@@ -31,7 +31,7 @@ export function AppSidebar() {
         </Button>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-0.5 mt-2">
         {navItems.map(item => {
           const isActive = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to) && item.to !== "/";
           return (
@@ -43,7 +43,7 @@ export function AppSidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -55,7 +55,7 @@ export function AppSidebar() {
 
       <div className="p-4 space-y-2">
         <NavLink to="/leads/new" onClick={() => setMobileOpen(false)}>
-          <Button variant="secondary" className="w-full justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
+          <Button className="w-full justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 rounded-lg">
             <Plus className="h-4 w-4" />
             Nieuwe Lead
           </Button>
@@ -66,7 +66,6 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Mobile hamburger trigger */}
       <Button
         variant="ghost"
         size="icon"
@@ -76,7 +75,6 @@ export function AppSidebar() {
         <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-foreground/30 z-40"
@@ -84,18 +82,16 @@ export function AppSidebar() {
         />
       )}
 
-      {/* Mobile sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-200",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-60 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {sidebarContent}
       </aside>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 min-h-screen bg-sidebar text-sidebar-foreground flex-col shrink-0">
+      <aside className="hidden lg:flex w-60 min-h-screen bg-sidebar text-sidebar-foreground flex-col shrink-0">
         {sidebarContent}
       </aside>
     </>
