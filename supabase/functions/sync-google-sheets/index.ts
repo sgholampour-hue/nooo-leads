@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Fetch all data from Sheet1
-    const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/Sheet1?key=${GOOGLE_SHEETS_API_KEY}`;
+    const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/Leads?key=${GOOGLE_SHEETS_API_KEY}`;
     const res = await fetch(sheetUrl);
     if (!res.ok) {
       const errText = await res.text();
