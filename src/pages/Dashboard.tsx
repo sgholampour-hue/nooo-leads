@@ -1,12 +1,30 @@
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
-import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal } from "lucide-react";
+import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal, RefreshCw } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem, HoverCard } from "@/components/PageTransition";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Dashboard() {
-  const { allLeads, notes } = useLeadsContext();
+  const { allLeads, notes, refreshLeads } = useLeadsContext();
   const navigate = useNavigate();
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-google-sheets");
+      if (error) throw error;
+      toast.success(`Sync voltooid: ${data?.synced || 0} leads gesynchroniseerd`);
+      refreshLeads?.();
+    } catch (e: any) {
+      toast.error("Sync mislukt: " + (e.message || "Onbekende fout"));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const totalLeads = allLeads.length;
   const urgentLeads = allLeads.filter(l => l.urgency_score >= 90).length;
@@ -62,11 +80,21 @@ export default function Dashboard() {
             <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Overview</h1>
             <p className="text-muted-foreground text-xs mt-1">Portfolio performance & incoming signals.</p>
           </div>
-          <select className="bg-card border border-border text-xs rounded-md px-3 py-1.5 focus:ring-1 focus:ring-foreground focus:outline-none text-muted-foreground font-medium">
-            <option>Last 30 Days</option>
-            <option>Last Quarter</option>
-            <option>YTD</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-md bg-card hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync Now"}
+            </button>
+            <select className="bg-card border border-border text-xs rounded-md px-3 py-1.5 focus:ring-1 focus:ring-foreground focus:outline-none text-muted-foreground font-medium">
+              <option>Last 30 Days</option>
+              <option>Last Quarter</option>
+              <option>YTD</option>
+            </select>
+          </div>
         </div>
 
         {/* Stat Cards */}
