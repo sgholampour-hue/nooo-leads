@@ -9,6 +9,8 @@ import { exportToCSV } from "@/lib/export";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
+import { PageTransition } from "@/components/PageTransition";
+import { motion } from "framer-motion";
 
 interface LeadsListProps {
   urgentOnly?: boolean;
@@ -55,7 +57,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <PageTransition className="space-y-6">
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
@@ -157,9 +159,12 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
                     </td>
                   </tr>
                 )}
-                {displayLeads.map(lead => (
-                  <tr
+                {displayLeads.map((lead, i) => (
+                  <motion.tr
                     key={lead.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03, duration: 0.2 }}
                     className="border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => navigate(`/leads/${lead.id}`)}
                   >
@@ -197,7 +202,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
                         </span>
                       ) : null}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
@@ -212,7 +217,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
             </div>
           </div>
         )}
-      </div>
+      </PageTransition>
     </AppLayout>
   );
 }

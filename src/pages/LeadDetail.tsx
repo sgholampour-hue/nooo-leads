@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { toast } from "sonner";
+import { PageTransition, StaggerContainer, StaggerItem, HoverCard } from "@/components/PageTransition";
 
 const noteTypeLabels: Record<string, string> = {
   general: "Algemeen",
@@ -135,7 +136,7 @@ export default function LeadDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <PageTransition className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
@@ -163,24 +164,32 @@ export default function LeadDetail() {
         </div>
 
         {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiry</p>
-            <p className="text-lg font-display font-bold text-foreground">{lead.expiration_year}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Duration</p>
-            <p className="text-lg font-display font-bold text-foreground">{lead.lease_duration}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Relocation</p>
-            <p className="text-lg font-display font-bold text-foreground">{lead.relocation_start}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Notes</p>
-            <p className="text-lg font-display font-bold text-foreground">{notes.length}</p>
-          </div>
-        </div>
+        <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiry</p>
+              <p className="text-lg font-display font-bold text-foreground">{lead.expiration_year}</p>
+            </HoverCard>
+          </StaggerItem>
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Duration</p>
+              <p className="text-lg font-display font-bold text-foreground">{lead.lease_duration}</p>
+            </HoverCard>
+          </StaggerItem>
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Relocation</p>
+              <p className="text-lg font-display font-bold text-foreground">{lead.relocation_start}</p>
+            </HoverCard>
+          </StaggerItem>
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Notes</p>
+              <p className="text-lg font-display font-bold text-foreground">{notes.length}</p>
+            </HoverCard>
+          </StaggerItem>
+        </StaggerContainer>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Lead Info */}
@@ -404,7 +413,7 @@ export default function LeadDetail() {
 
         {/* Status Timeline */}
         <StatusTimeline history={statusHistory.filter(s => s.lead_id === id)} />
-      </div>
+      </PageTransition>
     </AppLayout>
   );
 }

@@ -10,7 +10,7 @@ const navItems = [
   { to: "/", icon: LayoutGrid, label: "Overview" },
   { to: "/leads", icon: Users, label: "Leads Database" },
   { to: "/leads/urgent", icon: Bell, label: "Priority", showBadge: true },
-  { to: "/archive", icon: Archive, label: "Archive" },
+  { to: "/leads/archive", icon: Archive, label: "Archive" },
 ];
 
 export function AppSidebar() {
