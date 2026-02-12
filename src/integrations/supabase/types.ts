@@ -14,7 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      lead_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_pinned: boolean
+          lead_id: string
+          note_text: string
+          note_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean
+          lead_id: string
+          note_text: string
+          note_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_pinned?: boolean
+          lead_id?: string
+          note_text?: string
+          note_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          lead_id: string
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          lead_id: string
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          lead_id?: string
+          notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_status_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          bedrijfsnaam: string
+          cfo_email: string | null
+          created_at: string
+          expiration_year: string | null
+          gevonden_op: string | null
+          id: string
+          is_archived: boolean
+          kvk_number: number | null
+          lease_duration: string | null
+          linkedin_page: string | null
+          office_address: string | null
+          relocation_start: string | null
+          sheet_row_index: number | null
+          snippet: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          bedrijfsnaam: string
+          cfo_email?: string | null
+          created_at?: string
+          expiration_year?: string | null
+          gevonden_op?: string | null
+          id?: string
+          is_archived?: boolean
+          kvk_number?: number | null
+          lease_duration?: string | null
+          linkedin_page?: string | null
+          office_address?: string | null
+          relocation_start?: string | null
+          sheet_row_index?: number | null
+          snippet?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          bedrijfsnaam?: string
+          cfo_email?: string | null
+          created_at?: string
+          expiration_year?: string | null
+          gevonden_op?: string | null
+          id?: string
+          is_archived?: boolean
+          kvk_number?: number | null
+          lease_duration?: string | null
+          linkedin_page?: string | null
+          office_address?: string | null
+          relocation_start?: string | null
+          sheet_row_index?: number | null
+          snippet?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
