@@ -40,7 +40,7 @@ export default function Dashboard() {
     if (isNaN(y)) return;
     if (y >= 2030) {
       yearCounts["2030+"] = (yearCounts["2030+"] || 0) + 1;
-    } else if (y >= 2027) {
+    } else if (y >= 2026) {
       yearCounts[String(y)] = (yearCounts[String(y)] || 0) + 1;
     }
   });
