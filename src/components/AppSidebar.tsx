@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useLeadsContext } from "@/contexts/LeadsContext";
-import noooLogo from "@/assets/nooo-logo.png";
+import noooLogoFull from "@/assets/nooo-logo-full.png";
 
 const navItems = [
   { to: "/", icon: LayoutGrid, label: "Overview" },
@@ -24,10 +24,7 @@ export function AppSidebar() {
       {/* Logo */}
       <div className="p-6 pb-2">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-            <img src={noooLogo} alt="Nooo" className="h-4 brightness-0 invert" />
-          </div>
-          <span className="font-display font-bold text-lg text-foreground tracking-tight">Nooo Leads</span>
+          <img src={noooLogoFull} alt="No Ordinary Offices" className="h-10" />
         </div>
         <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-2">
           Platform

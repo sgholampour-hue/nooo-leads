@@ -72,7 +72,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Total Leads */}
           <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
             <div>
@@ -109,18 +109,7 @@ export default function Dashboard() {
             <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
           </div>
 
-          {/* Pipeline */}
-          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Pipeline</p>
-              </div>
-              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{pipelineValue}</h3>
-            </div>
-            <div className="w-full bg-muted rounded-full h-1 mt-auto">
-              <div className="bg-foreground h-1 rounded-full" style={{ width: `${verifiedPct}%` }} />
-            </div>
-          </div>
+          {/* Pipeline - removed as requested */}
         </div>
 
         {/* Chart + Activity */}
@@ -143,7 +132,11 @@ export default function Dashboard() {
                 <div key={item.year} className="flex flex-col items-center gap-3 flex-1 group">
                   <div className="w-full bg-muted rounded-t-md h-48 relative flex items-end overflow-hidden">
                     <div
-                      className="w-full bg-foreground group-hover:bg-foreground/80 transition-colors rounded-t-md"
+                      className={`w-full rounded-t-md transition-colors ${
+                        item.year === chartData[0]?.year
+                          ? 'bg-[hsl(152,40%,35%)] group-hover:bg-[hsl(152,40%,30%)]'
+                          : 'bg-[hsl(152,30%,65%)] group-hover:bg-[hsl(152,30%,55%)]'
+                      }`}
                       style={{ height: `${(item.count / maxCount) * 100}%` }}
                     />
                   </div>
