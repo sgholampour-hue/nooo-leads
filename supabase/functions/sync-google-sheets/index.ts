@@ -38,8 +38,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const headers = rows[0].map((h: string) => h.trim().toLowerCase());
+    const rawHeaders = rows[0].map((h: string) => h.trim());
+    // Normalize headers: lowercase and replace spaces with underscores
+    const headers = rawHeaders.map((h: string) => h.toLowerCase().replace(/\s+/g, '_'));
     const dataRows = rows.slice(1);
+
+    console.log("Normalized headers:", JSON.stringify(headers));
 
     // Map column indices
     const col = (name: string) => headers.indexOf(name);
