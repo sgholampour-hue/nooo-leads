@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead, LeadWithStats, LeadNote, LeadStatusHistory, LeadFilters } from "@/types/leads";
 import { calculateUrgency } from "@/lib/urgency";
+import { validateLead, sanitizeLeadUpdate } from "@/lib/validation";
 
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -107,18 +108,25 @@ export function useLeads() {
     })
     .sort((a, b) => b.urgency_score - a.urgency_score);
 
+  // OWASP: Validate all input before database insertion; strip unexpected fields
   const addLead = async (lead: Omit<Lead, "id" | "created_at" | "updated_at" | "gevonden_op">) => {
-    const { data, error } = await supabase.from("leads").insert({
-      ...lead,
-      gevonden_op: new Date().toISOString(),
-    }).select().single();
+    const validation = validateLead(lead);
+    if (!validation.success) {
+      console.error("Validation failed:", validation);
+      return null;
+    }
+    const insertData = { ...validation.data, gevonden_op: new Date().toISOString() } as any;
+    const { data, error } = await supabase.from("leads").insert(insertData).select().single();
     if (error) { console.error("Error adding lead:", error); return null; }
     await fetchLeads();
     return data as Lead;
   };
 
+  // OWASP: Sanitize partial updates to only allow known fields
   const updateLead = async (id: string, updates: Partial<Lead>) => {
-    const { error } = await supabase.from("leads").update(updates).eq("id", id);
+    const sanitized = sanitizeLeadUpdate(updates as Record<string, unknown>);
+    if (Object.keys(sanitized).length === 0) return;
+    const { error } = await supabase.from("leads").update(sanitized).eq("id", id);
     if (error) console.error("Error updating lead:", error);
     else await fetchLeads();
   };

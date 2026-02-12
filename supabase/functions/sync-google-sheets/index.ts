@@ -3,8 +3,56 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// --- Rate Limiting (in-memory, per-instance) ---
+// OWASP: Protect against brute-force and abuse on public endpoints
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute window
+const RATE_LIMIT_MAX_REQUESTS_PER_IP = 5; // Max 5 requests per IP per minute
+const RATE_LIMIT_MAX_REQUESTS_PER_USER = 10; // Max 10 requests per user per minute
+
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+const ipLimiter = new Map<string, RateLimitEntry>();
+const userLimiter = new Map<string, RateLimitEntry>();
+
+function checkRateLimit(
+  limiter: Map<string, RateLimitEntry>,
+  key: string,
+  maxRequests: number
+): { allowed: boolean; retryAfterMs: number } {
+  const now = Date.now();
+  const entry = limiter.get(key);
+
+  if (!entry || now >= entry.resetAt) {
+    // Window expired or first request — start fresh
+    limiter.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+
+  if (entry.count >= maxRequests) {
+    // Over limit — return retry-after in seconds
+    return { allowed: false, retryAfterMs: entry.resetAt - now };
+  }
+
+  entry.count++;
+  return { allowed: true, retryAfterMs: 0 };
+}
+
+// Periodic cleanup to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of ipLimiter) {
+    if (now >= entry.resetAt) ipLimiter.delete(key);
+  }
+  for (const [key, entry] of userLimiter) {
+    if (now >= entry.resetAt) userLimiter.delete(key);
+  }
+}, 60_000);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,7 +60,29 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate the caller
+    // --- IP-based rate limiting ---
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+
+    const ipCheck = checkRateLimit(ipLimiter, clientIp, RATE_LIMIT_MAX_REQUESTS_PER_IP);
+    if (!ipCheck.allowed) {
+      const retryAfterSec = Math.ceil(ipCheck.retryAfterMs / 1000);
+      return new Response(
+        JSON.stringify({ error: "Te veel verzoeken. Probeer het later opnieuw." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfterSec),
+          },
+        }
+      );
+    }
+
+    // --- Authenticate the caller ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -36,6 +106,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    // --- User-based rate limiting (after authentication) ---
+    const userId = claimsData.claims.sub as string;
+    const userCheck = checkRateLimit(userLimiter, userId, RATE_LIMIT_MAX_REQUESTS_PER_USER);
+    if (!userCheck.allowed) {
+      const retryAfterSec = Math.ceil(userCheck.retryAfterMs / 1000);
+      return new Response(
+        JSON.stringify({ error: "Te veel verzoeken. Probeer het later opnieuw." }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfterSec),
+          },
+        }
+      );
+    }
+
+    // --- Secrets: all API keys are stored as server-side secrets, never exposed client-side ---
     const GOOGLE_SHEETS_API_KEY = Deno.env.get("GOOGLE_SHEETS_API_KEY");
     if (!GOOGLE_SHEETS_API_KEY) throw new Error("GOOGLE_SHEETS_API_KEY not set");
 
@@ -47,11 +136,13 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Fetch all data from Sheet1
-    const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/Leads?key=${GOOGLE_SHEETS_API_KEY}`;
+    const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(GOOGLE_SHEET_ID)}/values/Leads?key=${encodeURIComponent(GOOGLE_SHEETS_API_KEY)}`;
     const res = await fetch(sheetUrl);
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Google Sheets API error [${res.status}]: ${errText}`);
+      // OWASP: Don't leak internal error details to client
+      console.error(`Google Sheets API error [${res.status}]: ${errText}`);
+      throw new Error("Failed to fetch data from external source.");
     }
 
     const data = await res.json();
@@ -67,16 +158,23 @@ Deno.serve(async (req) => {
     const headers = rawHeaders.map((h: string) => h.toLowerCase().replace(/\s+/g, '_'));
     const dataRows = rows.slice(1);
 
-    console.log("Normalized headers:", JSON.stringify(headers));
-
     // Map column indices
     const col = (name: string) => headers.indexOf(name);
+
+    // --- Strict input sanitization for each row ---
+    // OWASP: Validate and sanitize all external input before database insertion
+    const ALLOWED_FIELDS = [
+      "kvk_number", "bedrijfsnaam", "website", "office_address",
+      "relocation_start", "expiration_year", "lease_duration",
+      "linkedin_page", "cfo_email", "snippet", "gevonden_op",
+      "sheet_row_index", "is_archived",
+    ];
 
     const leadsToUpsert = dataRows.map((row, idx) => {
       const get = (name: string) => {
         const i = col(name);
         const val = i >= 0 && i < row.length ? row[i]?.trim() || "" : "";
-        return val.substring(0, 2000); // Limit all field lengths
+        return val.substring(0, 2000);
       };
 
       const kvkStr = get("kvk_number");
@@ -109,17 +207,23 @@ Deno.serve(async (req) => {
     // Upsert using sheet_row_index as the unique key
     let synced = 0;
     for (const lead of validLeads) {
+      // Strip any unexpected fields (defense in depth)
+      const sanitizedLead: Record<string, unknown> = {};
+      for (const key of ALLOWED_FIELDS) {
+        if (key in lead) sanitizedLead[key] = (lead as Record<string, unknown>)[key];
+      }
+
       // Try to find existing by kvk_number first, then sheet_row_index
       const { data: existing } = lead.kvk_number
         ? await supabase.from("leads").select("id").eq("kvk_number", lead.kvk_number).maybeSingle()
         : await supabase.from("leads").select("id").eq("sheet_row_index", lead.sheet_row_index).maybeSingle();
 
       if (existing) {
-        const { error } = await supabase.from("leads").update(lead).eq("id", existing.id);
+        const { error } = await supabase.from("leads").update(sanitizedLead).eq("id", existing.id);
         if (error) console.error("Update error:", error);
         else synced++;
       } else {
-        const { error } = await supabase.from("leads").insert(lead);
+        const { error } = await supabase.from("leads").insert(sanitizedLead);
         if (error) console.error("Insert error:", error);
         else synced++;
       }
@@ -131,8 +235,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Sync error:", error);
+    // OWASP: Return generic error message, log details server-side only
     return new Response(
-      JSON.stringify({ error: "Sync failed. Check server logs for details." }),
+      JSON.stringify({ error: "Sync failed. Please try again later." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
