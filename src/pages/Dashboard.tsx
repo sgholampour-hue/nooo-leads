@@ -19,6 +19,7 @@ export default function Dashboard() {
     const yr = l.expiration_year || "Unknown";
     if (yr === "Unknown") return;
     const y = parseInt(yr);
+    if (y < 2027) return;
     if (y >= 2028) {
       yearCounts["2028+"] = (yearCounts["2028+"] || 0) + 1;
     } else {
