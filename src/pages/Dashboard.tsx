@@ -73,7 +73,7 @@ export default function Dashboard() {
         <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Total Leads */}
           <StaggerItem>
-            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+            <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Total Leads</p>
@@ -88,7 +88,7 @@ export default function Dashboard() {
 
           {/* High Urgency */}
           <StaggerItem>
-            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+            <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">High Urgency</p>
@@ -102,7 +102,7 @@ export default function Dashboard() {
 
           {/* Verified */}
           <StaggerItem>
-            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+            <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Verified</p>
@@ -117,7 +117,7 @@ export default function Dashboard() {
         {/* Chart + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Lease Expirations Chart */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
+          <div className="lg:col-span-2 bento-hover bg-card border border-border rounded-xl p-6">
             <div className="flex justify-between items-start mb-8">
               <div>
                 <h3 className="font-display font-bold text-lg text-foreground tracking-tight">Lease Expirations</h3>
@@ -149,7 +149,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-card border border-border rounded-xl p-6 flex flex-col">
+          <div className="bento-hover bg-card border border-border rounded-xl p-6 flex flex-col">
             <h3 className="font-display font-bold text-lg text-foreground tracking-tight mb-6">Recent Activity</h3>
             <div className="space-y-5 flex-1 overflow-hidden relative">
               {/* Timeline line */}
