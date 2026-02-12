@@ -3,7 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { LeadsProvider } from "@/contexts/LeadsContext";
+import Dashboard from "./pages/Dashboard";
+import LeadsList from "./pages/LeadsList";
+import LeadDetail from "./pages/LeadDetail";
+import NewLead from "./pages/NewLead";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -13,13 +17,18 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <LeadsProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/leads" element={<LeadsList />} />
+            <Route path="/leads/urgent" element={<LeadsList urgentOnly />} />
+            <Route path="/leads/new" element={<NewLead />} />
+            <Route path="/leads/:id" element={<LeadDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </LeadsProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
