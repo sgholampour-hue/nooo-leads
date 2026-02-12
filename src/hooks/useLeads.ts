@@ -5,6 +5,7 @@ import { calculateUrgency } from "@/lib/urgency";
 
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [archivedLeads, setArchivedLeads] = useState<Lead[]>([]);
   const [notes, setNotes] = useState<LeadNote[]>([]);
   const [statusHistory, setStatusHistory] = useState<LeadStatusHistory[]>([]);
   const [filters, setFilters] = useState<LeadFilters>({ search: "", year: "all", urgency: "all" });
@@ -19,6 +20,16 @@ export function useLeads() {
       .order("created_at", { ascending: false });
     if (error) console.error("Error fetching leads:", error);
     else setLeads((data || []) as Lead[]);
+  }, []);
+
+  const fetchArchivedLeads = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("is_archived", true)
+      .order("updated_at", { ascending: false });
+    if (error) console.error("Error fetching archived leads:", error);
+    else setArchivedLeads((data || []) as Lead[]);
   }, []);
 
   const fetchNotes = useCallback(async () => {
@@ -42,7 +53,7 @@ export function useLeads() {
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      await Promise.all([fetchLeads(), fetchNotes(), fetchStatusHistory()]);
+      await Promise.all([fetchLeads(), fetchArchivedLeads(), fetchNotes(), fetchStatusHistory()]);
       setLoading(false);
     };
     loadAll();
@@ -52,6 +63,7 @@ export function useLeads() {
       .channel("leads-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
         fetchLeads();
+        fetchArchivedLeads();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "lead_notes" }, () => {
         fetchNotes();
@@ -62,7 +74,7 @@ export function useLeads() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchLeads, fetchNotes, fetchStatusHistory]);
+  }, [fetchLeads, fetchArchivedLeads, fetchNotes, fetchStatusHistory]);
 
   const leadsWithStats: LeadWithStats[] = leads.map(lead => {
     const leadNotes = notes.filter(n => n.lead_id === lead.id);
@@ -119,6 +131,18 @@ export function useLeads() {
     else await fetchLeads();
   };
 
+  const archiveLead = async (id: string) => {
+    const { error } = await supabase.from("leads").update({ is_archived: true }).eq("id", id);
+    if (error) console.error("Error archiving lead:", error);
+    else { await fetchLeads(); await fetchArchivedLeads(); }
+  };
+
+  const unarchiveLead = async (id: string) => {
+    const { error } = await supabase.from("leads").update({ is_archived: false }).eq("id", id);
+    if (error) console.error("Error unarchiving lead:", error);
+    else { await fetchLeads(); await fetchArchivedLeads(); }
+  };
+
   const setNotesWithSync = useCallback(async (newNotes: LeadNote[]) => {
     // This is used by useNotes hook - we just refetch
     setNotes(newNotes);
@@ -128,9 +152,24 @@ export function useLeads() {
     setStatusHistory(newHistory);
   }, []);
 
+  const archivedLeadsWithStats: LeadWithStats[] = archivedLeads.map(lead => {
+    const leadNotes = notes.filter(n => n.lead_id === lead.id);
+    const lastStatus = statusHistory
+      .filter(s => s.lead_id === lead.id)
+      .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())[0];
+    return {
+      ...lead,
+      urgency_score: calculateUrgency(lead.expiration_year),
+      note_count: leadNotes.length,
+      last_note_at: leadNotes.length > 0 ? leadNotes.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at : null,
+      current_status: lastStatus?.status || "new",
+    };
+  });
+
   return {
     leads: filteredLeads,
     allLeads: leadsWithStats,
+    archivedLeads: archivedLeadsWithStats,
     notes,
     statusHistory,
     filters,
@@ -138,6 +177,8 @@ export function useLeads() {
     addLead,
     updateLead,
     deleteLead,
+    archiveLead,
+    unarchiveLead,
     setNotes: setNotesWithSync,
     setStatusHistory: setStatusHistoryWithSync,
     loading,
