@@ -6,7 +6,9 @@ import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -16,7 +18,7 @@ import {
 import {
   ArrowLeft, ExternalLink, Edit, Save, Plus, Pin, Trash2,
   MoreVertical, MessageSquare, Clock, User, Globe, MapPin,
-  Calendar, Mail, Linkedin
+  Calendar, Mail, Linkedin, X
 } from "lucide-react";
 import { useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
@@ -41,7 +43,7 @@ const noteTypeColors: Record<string, string> = {
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory } = useLeadsContext();
+  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead } = useLeadsContext();
   const lead = allLeads.find(l => l.id === id);
 
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(allNotes, setAllNotes, id || "");
@@ -52,6 +54,18 @@ export default function LeadDetail() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteText, setEditNoteText] = useState("");
   const [showFullSnippet, setShowFullSnippet] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    bedrijfsnaam: "",
+    website: "",
+    office_address: "",
+    expiration_year: "",
+    lease_duration: "",
+    relocation_start: "",
+    cfo_email: "",
+    linkedin_page: "",
+    snippet: "",
+  });
 
   if (!lead) {
     return (
@@ -65,6 +79,27 @@ export default function LeadDetail() {
       </AppLayout>
     );
   }
+
+  const startEditing = () => {
+    setEditForm({
+      bedrijfsnaam: lead.bedrijfsnaam,
+      website: lead.website,
+      office_address: lead.office_address,
+      expiration_year: lead.expiration_year,
+      lease_duration: lead.lease_duration,
+      relocation_start: lead.relocation_start,
+      cfo_email: lead.cfo_email,
+      linkedin_page: lead.linkedin_page,
+      snippet: lead.snippet,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    updateLead(lead.id, editForm);
+    setIsEditing(false);
+    toast.success("Lead bijgewerkt");
+  };
 
   const handleSaveNote = () => {
     if (!newNoteText.trim()) return;
@@ -101,6 +136,8 @@ export default function LeadDetail() {
     return new Date(dateStr).toLocaleDateString("nl-NL");
   };
 
+  const updateField = (field: string, value: string) => setEditForm(prev => ({ ...prev, [field]: value }));
+
   return (
     <AppLayout>
       <div className="space-y-5">
@@ -112,7 +149,7 @@ export default function LeadDetail() {
             <h1 className="text-2xl font-bold text-foreground">{lead.bedrijfsnaam}</h1>
             <p className="text-sm text-muted-foreground">KvK: {lead.kvk_number}</p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             <UrgencyBadge score={lead.urgency_score} />
           </div>
         </div>
@@ -120,51 +157,113 @@ export default function LeadDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Lead Info */}
           <Card className="lg:col-span-2 p-6">
-            <h3 className="font-semibold text-foreground mb-4">Lead Informatie</h3>
-            <div className="space-y-4">
-              <InfoRow icon={<Globe className="h-4 w-4" />} label="Website" value={lead.website} isLink />
-              <InfoRow icon={<MapPin className="h-4 w-4" />} label="Locatie" value={lead.office_address} />
-              <InfoRow icon={<Calendar className="h-4 w-4" />} label="Lease Expiratie" value={lead.expiration_year} />
-              <InfoRow icon={<Clock className="h-4 w-4" />} label="Lease Duur" value={lead.lease_duration} />
-              <InfoRow icon={<Calendar className="h-4 w-4" />} label="Verhuizing" value={lead.relocation_start} />
-              <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={lead.cfo_email} isEmail />
-              <InfoRow icon={<Linkedin className="h-4 w-4" />} label="LinkedIn" value={lead.linkedin_page} isLink />
-              <InfoRow icon={<Clock className="h-4 w-4" />} label="Gevonden op" value={new Date(lead.gevonden_op).toLocaleDateString("nl-NL")} />
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-foreground">Lead Informatie</h3>
+              {!isEditing ? (
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  <Edit className="mr-2 h-3.5 w-3.5" /> Bewerk
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                    <X className="mr-1 h-3.5 w-3.5" /> Annuleer
+                  </Button>
+                  <Button size="sm" onClick={handleSaveEdit}>
+                    <Save className="mr-1 h-3.5 w-3.5" /> Opslaan
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {lead.snippet && (
+            {isEditing ? (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Bedrijfsnaam</Label>
+                  <Input value={editForm.bedrijfsnaam} onChange={e => updateField("bedrijfsnaam", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Website</Label>
+                  <Input value={editForm.website} onChange={e => updateField("website", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Kantooradres</Label>
+                  <Input value={editForm.office_address} onChange={e => updateField("office_address", e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Expiratie Jaar</Label>
+                    <Input value={editForm.expiration_year} onChange={e => updateField("expiration_year", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Lease Duur</Label>
+                    <Input value={editForm.lease_duration} onChange={e => updateField("lease_duration", e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Verhuizing Start</Label>
+                  <Input value={editForm.relocation_start} onChange={e => updateField("relocation_start", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Email</Label>
+                  <Input value={editForm.cfo_email} onChange={e => updateField("cfo_email", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">LinkedIn</Label>
+                  <Input value={editForm.linkedin_page} onChange={e => updateField("linkedin_page", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Bedrijfsomschrijving</Label>
+                  <Textarea value={editForm.snippet} onChange={e => updateField("snippet", e.target.value)} rows={4} />
+                </div>
+              </div>
+            ) : (
               <>
-                <Separator className="my-4" />
-                <div>
-                  <h4 className="font-semibold text-sm text-foreground mb-2">Bedrijfsomschrijving</h4>
-                  <p className={`text-sm text-muted-foreground ${!showFullSnippet ? "line-clamp-4" : ""}`}>
-                    {lead.snippet}
-                  </p>
-                  {lead.snippet.length > 150 && (
-                    <Button variant="ghost" size="sm" className="mt-1 p-0 h-auto text-xs" onClick={() => setShowFullSnippet(!showFullSnippet)}>
-                      {showFullSnippet ? "Minder tonen" : "Meer tonen"}
+                <div className="space-y-4">
+                  <InfoRow icon={<Globe className="h-4 w-4" />} label="Website" value={lead.website} isLink />
+                  <InfoRow icon={<MapPin className="h-4 w-4" />} label="Locatie" value={lead.office_address} />
+                  <InfoRow icon={<Calendar className="h-4 w-4" />} label="Lease Expiratie" value={lead.expiration_year} />
+                  <InfoRow icon={<Clock className="h-4 w-4" />} label="Lease Duur" value={lead.lease_duration} />
+                  <InfoRow icon={<Calendar className="h-4 w-4" />} label="Verhuizing" value={lead.relocation_start} />
+                  <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={lead.cfo_email} isEmail />
+                  <InfoRow icon={<Linkedin className="h-4 w-4" />} label="LinkedIn" value={lead.linkedin_page} isLink />
+                  <InfoRow icon={<Clock className="h-4 w-4" />} label="Gevonden op" value={new Date(lead.gevonden_op).toLocaleDateString("nl-NL")} />
+                </div>
+
+                {lead.snippet && (
+                  <>
+                    <Separator className="my-4" />
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2">Bedrijfsomschrijving</h4>
+                      <p className={`text-sm text-muted-foreground ${!showFullSnippet ? "line-clamp-4" : ""}`}>
+                        {lead.snippet}
+                      </p>
+                      {lead.snippet.length > 150 && (
+                        <Button variant="ghost" size="sm" className="mt-1 p-0 h-auto text-xs" onClick={() => setShowFullSnippet(!showFullSnippet)}>
+                          {showFullSnippet ? "Minder tonen" : "Meer tonen"}
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-2 mt-6">
+                  {lead.website && (
+                    <Button variant="outline" className="flex-1" asChild>
+                      <a href={lead.website} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" /> Website
+                      </a>
+                    </Button>
+                  )}
+                  {lead.linkedin_page && (
+                    <Button variant="outline" className="flex-1" asChild>
+                      <a href={lead.linkedin_page} target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="mr-2 h-4 w-4" /> LinkedIn
+                      </a>
                     </Button>
                   )}
                 </div>
               </>
             )}
-
-            <div className="flex gap-2 mt-6">
-              {lead.website && (
-                <Button variant="outline" className="flex-1" asChild>
-                  <a href={lead.website} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" /> Website
-                  </a>
-                </Button>
-              )}
-              {lead.linkedin_page && (
-                <Button variant="outline" className="flex-1" asChild>
-                  <a href={lead.linkedin_page} target="_blank" rel="noopener noreferrer">
-                    <Linkedin className="mr-2 h-4 w-4" /> LinkedIn
-                  </a>
-                </Button>
-              )}
-            </div>
           </Card>
 
           {/* Right: Notes */}

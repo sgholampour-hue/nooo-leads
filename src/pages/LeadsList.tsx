@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
 import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Download, ExternalLink, MessageSquare, Trash2, Eye } from "lucide-react";
+import { Search, Download, MessageSquare, Trash2, Eye, X } from "lucide-react";
 import { getRowUrgencyClass } from "@/lib/urgency";
 import { exportToCSV } from "@/lib/export";
 import { useNavigate } from "react-router-dom";
@@ -16,10 +18,44 @@ interface LeadsListProps {
 }
 
 export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
-  const { leads, allLeads, filters, setFilters, deleteLead } = useLeadsContext();
+  const { leads, filters, setFilters, deleteLead } = useLeadsContext();
   const navigate = useNavigate();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const displayLeads = urgentOnly ? leads.filter(l => l.urgency_score >= 90) : leads;
+
+  const allSelected = displayLeads.length > 0 && displayLeads.every(l => selectedIds.has(l.id));
+  const someSelected = selectedIds.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(displayLeads.map(l => l.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (confirm(`Weet je zeker dat je ${selectedIds.size} leads wilt verwijderen?`)) {
+      selectedIds.forEach(id => deleteLead(id));
+      toast.success(`${selectedIds.size} leads verwijderd`);
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selected = displayLeads.filter(l => selectedIds.has(l.id));
+    exportToCSV(selected);
+    toast.success(`${selected.length} leads geëxporteerd`);
+  };
 
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Weet je zeker dat je "${name}" wilt verwijderen?`)) {
@@ -41,6 +77,28 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
             </p>
           </div>
         </div>
+
+        {/* Bulk Actions Bar */}
+        {someSelected && (
+          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 p-3 rounded-lg">
+            <span className="text-sm font-medium text-foreground">
+              {selectedIds.size} geselecteerd
+            </span>
+            <div className="flex gap-2 ml-auto">
+              <Button variant="outline" size="sm" onClick={handleBulkExport}>
+                <Download className="mr-2 h-3.5 w-3.5" />
+                Export
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Verwijderen
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedIds(new Set())}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center bg-card p-4 rounded-lg border">
@@ -88,6 +146,13 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[44px]">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Selecteer alles"
+                  />
+                </TableHead>
                 <TableHead className="w-[100px]">Urgentie</TableHead>
                 <TableHead>Bedrijf</TableHead>
                 <TableHead className="hidden lg:table-cell">Locatie</TableHead>
@@ -103,7 +168,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
             <TableBody>
               {displayLeads.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                     Geen leads gevonden
                   </TableCell>
                 </TableRow>
@@ -111,9 +176,16 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
               {displayLeads.map(lead => (
                 <TableRow
                   key={lead.id}
-                  className={`cursor-pointer ${getRowUrgencyClass(lead.urgency_score)}`}
+                  className={`cursor-pointer ${getRowUrgencyClass(lead.urgency_score)} ${selectedIds.has(lead.id) ? "bg-primary/5" : ""}`}
                   onClick={() => navigate(`/leads/${lead.id}`)}
                 >
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedIds.has(lead.id)}
+                      onCheckedChange={() => toggleSelect(lead.id)}
+                      aria-label={`Selecteer ${lead.bedrijfsnaam}`}
+                    />
+                  </TableCell>
                   <TableCell><UrgencyBadge score={lead.urgency_score} /></TableCell>
                   <TableCell>
                     <div>
@@ -130,17 +202,15 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm">{lead.relocation_start}</TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    <div className="flex gap-2">
-                      {lead.cfo_email && (
-                        <a
-                          href={`mailto:${lead.cfo_email}`}
-                          onClick={e => e.stopPropagation()}
-                          className="text-xs text-primary hover:underline truncate max-w-[120px]"
-                        >
-                          {lead.cfo_email}
-                        </a>
-                      )}
-                    </div>
+                    {lead.cfo_email && (
+                      <a
+                        href={`mailto:${lead.cfo_email}`}
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs text-primary hover:underline truncate max-w-[120px] block"
+                      >
+                        {lead.cfo_email}
+                      </a>
+                    )}
                   </TableCell>
                   <TableCell>
                     {lead.note_count > 0 && (
