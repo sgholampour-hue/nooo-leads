@@ -7,10 +7,10 @@ import { useLeadsContext } from "@/contexts/LeadsContext";
 import noooLogoFull from "@/assets/nooo-logo-full.png";
 
 const navItems = [
-  { to: "/", icon: LayoutGrid, label: "Overview" },
+  { to: "/", icon: LayoutGrid, label: "Overzicht" },
   { to: "/leads", icon: Users, label: "Leads Database" },
-  { to: "/leads/urgent", icon: Bell, label: "Priority", showBadge: true },
-  { to: "/leads/archive", icon: Archive, label: "Archive" },
+  { to: "/leads/urgent", icon: Bell, label: "Prioriteit", showBadge: true },
+  { to: "/leads/archive", icon: Archive, label: "Archief" },
 ];
 
 export function AppSidebar() {
@@ -68,8 +68,8 @@ export function AppSidebar() {
             <User className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">Nooo User</p>
-            <p className="text-[10px] text-muted-foreground truncate">Workspace Admin</p>
+            <p className="text-sm font-semibold text-foreground truncate">Nooo Gebruiker</p>
+            <p className="text-[10px] text-muted-foreground truncate">Werkruimte Beheerder</p>
           </div>
           <Settings className="h-4 w-4 text-muted-foreground" />
         </div>

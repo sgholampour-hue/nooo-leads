@@ -67,7 +67,7 @@ export default function Dashboard() {
     if (diffHrs < 24) {
       return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
     }
-    if (diffHrs < 48) return "Yesterday";
+    if (diffHrs < 48) return "Gisteren";
     return d.toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
   };
 
@@ -77,8 +77,8 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Overview</h1>
-            <p className="text-muted-foreground text-xs mt-1">Portfolio performance & incoming signals.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Overzicht</h1>
+            <p className="text-muted-foreground text-xs mt-1">Portfolio prestaties & inkomende signalen.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -87,12 +87,12 @@ export default function Dashboard() {
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-border rounded-md bg-card hover:bg-muted transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing..." : "Sync Now"}
+              {syncing ? "Synchroniseren..." : "Synchroniseer"}
             </button>
             <select className="bg-card border border-border text-xs rounded-md px-3 py-1.5 focus:ring-1 focus:ring-foreground focus:outline-none text-muted-foreground font-medium">
-              <option>Last 30 Days</option>
-              <option>Last Quarter</option>
-              <option>YTD</option>
+              <option>Laatste 30 dagen</option>
+              <option>Laatste kwartaal</option>
+              <option>Jaar tot nu</option>
             </select>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function Dashboard() {
             <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Total Leads</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Totaal Leads</p>
                 </div>
                 <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{totalLeads}</h3>
               </div>
@@ -119,12 +119,12 @@ export default function Dashboard() {
             <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">High Urgency</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Hoge Urgentie</p>
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 </div>
                 <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{urgentLeads}</h3>
               </div>
-              <p className="text-destructive text-[10px] font-medium">Requires immediate action</p>
+              <p className="text-destructive text-[10px] font-medium">Vereist directe actie</p>
             </HoverCard>
           </StaggerItem>
 
@@ -133,11 +133,11 @@ export default function Dashboard() {
             <HoverCard className="bento-hover bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Verified</p>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Geverifieerd</p>
                 </div>
                 <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{verifiedPct}%</h3>
               </div>
-              <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
+              <p className="text-muted-foreground text-[10px]">{withEmail} geverifieerde contacten</p>
             </HoverCard>
           </StaggerItem>
         </StaggerContainer>
@@ -148,8 +148,8 @@ export default function Dashboard() {
           <div className="lg:col-span-2 bento-hover bg-card border border-border rounded-xl p-6">
             <div className="flex justify-between items-start mb-8">
               <div>
-                <h3 className="font-display font-bold text-lg text-foreground tracking-tight">Lease Expirations</h3>
-                <p className="text-muted-foreground text-xs">Distribution by year</p>
+                <h3 className="font-display font-bold text-lg text-foreground tracking-tight">Lease Expiraties</h3>
+                <p className="text-muted-foreground text-xs">Verdeling per jaar</p>
               </div>
               <button className="text-muted-foreground hover:text-foreground transition-colors">
                 <MoreHorizontal className="h-5 w-5" />
@@ -178,13 +178,13 @@ export default function Dashboard() {
 
           {/* Recent Activity */}
           <div className="bento-hover bg-card border border-border rounded-xl p-6 flex flex-col">
-            <h3 className="font-display font-bold text-lg text-foreground tracking-tight mb-6">Recent Activity</h3>
+            <h3 className="font-display font-bold text-lg text-foreground tracking-tight mb-6">Recente Activiteit</h3>
             <div className="space-y-5 flex-1 overflow-hidden relative">
               {/* Timeline line */}
               <div className="absolute left-[15px] top-2 bottom-0 w-px bg-border" />
 
               {recentNotes.length === 0 && (
-                <p className="text-muted-foreground text-xs text-center py-8">No recent activity</p>
+                <p className="text-muted-foreground text-xs text-center py-8">Geen recente activiteit</p>
               )}
 
               {recentNotes.map((note, i) => (
@@ -212,16 +212,17 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-foreground text-xs font-semibold">
-                      {note.note_type === 'general' ? 'Note added' :
-                       note.note_type === 'contact_attempt' ? 'Contact Attempt' :
-                       note.note_type === 'meeting' ? 'Meeting' :
+                      {note.note_type === 'general' ? 'Notitie toegevoegd' :
+                       note.note_type === 'contact_attempt' ? 'Contactpoging' :
+                       note.note_type === 'meeting' ? 'Vergadering' :
                        note.note_type === 'follow_up' ? 'Follow-up' :
-                       note.note_type === 'proposal' ? 'Proposal Sent' : 'Update'}
+                       note.note_type === 'proposal' ? 'Voorstel verstuurd' : 'Update'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       <span className="text-foreground/80 font-medium">{note.bedrijfsnaam}</span>
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-1 font-mono">{formatTime(note.created_at)}</p>
+
                   </div>
                 </div>
               ))}
