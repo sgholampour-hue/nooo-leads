@@ -3,9 +3,9 @@ import { StatCard } from "@/components/StatCard";
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card } from "@/components/ui/card";
-import { UrgencyBadge } from "@/components/UrgencyBadge";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import noooCircles from "@/assets/nooo-circles.png";
 
 export default function Dashboard() {
   const { allLeads, notes } = useLeadsContext();
@@ -47,28 +47,31 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Overzicht van alle vastgoed leads</p>
+      <div className="space-y-5 sm:space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground text-sm">Overzicht van alle vastgoed leads</p>
+          </div>
+          <img src={noooCircles} alt="" className="h-8 sm:h-10 opacity-15 hidden sm:block" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard title="Totaal Leads" value={totalLeads} icon={<Building2 className="h-5 w-5" />} />
           <StatCard title="Hoge Urgentie" value={urgentLeads} icon={<AlertCircle className="h-5 w-5" />} subtitle="Expireert ≤ dit jaar" />
           <StatCard title="Met Email" value={withEmail} icon={<Mail className="h-5 w-5" />} subtitle={`${totalLeads > 0 ? Math.round(withEmail / totalLeads * 100) : 0}% bereikbaar`} />
           <StatCard title="Nieuw (7d)" value={recentLeads} icon={<TrendingUp className="h-5 w-5" />} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-5">
-            <h3 className="font-semibold text-foreground mb-4">Leads per Expiratie Jaar</h3>
-            <div className="h-64">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card className="p-4 sm:p-5">
+            <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Leads per Expiratie Jaar</h3>
+            <div className="h-48 sm:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="year" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <XAxis dataKey="year" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                     {chartData.map((entry, i) => (
@@ -80,16 +83,16 @@ export default function Dashboard() {
             </div>
           </Card>
 
-          <Card className="p-5">
-            <h3 className="font-semibold text-foreground mb-4">Recente Activiteit</h3>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+          <Card className="p-4 sm:p-5">
+            <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Recente Activiteit</h3>
+            <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto">
               {recentNotes.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-8">Nog geen activiteit</p>
               )}
               {recentNotes.map(note => (
                 <div
                   key={note.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="flex items-start gap-3 p-2.5 sm:p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => navigate(`/leads/${note.lead_id}`)}
                 >
                   <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />

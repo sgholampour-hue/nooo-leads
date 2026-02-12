@@ -145,18 +145,18 @@ export default function LeadDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate("/leads")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{lead.bedrijfsnaam}</h1>
-            <p className="text-sm text-muted-foreground">KvK: {lead.kvk_number}</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{lead.bedrijfsnaam}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">KvK: {lead.kvk_number}</p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="shrink-0">
             <UrgencyBadge score={lead.urgency_score} />
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Lead Info */}
-          <Card className="lg:col-span-2 p-6">
+          <Card className="lg:col-span-2 p-4 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-foreground">Lead Informatie</h3>
               {!isEditing ? (
@@ -267,7 +267,7 @@ export default function LeadDetail() {
           </Card>
 
           {/* Right: Notes */}
-          <Card className="lg:col-span-3 p-6">
+          <Card className="lg:col-span-3 p-4 sm:p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-foreground">
                 Notities ({notes.length})
