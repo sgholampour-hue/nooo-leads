@@ -1,68 +1,80 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, AlertTriangle, Plus, Menu, X } from "lucide-react";
+import { LayoutGrid, Users, Bell, Archive, Plus, Menu, X, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import noooLogoWhite from "@/assets/nooo-logo-white.png";
-import noooCircles from "@/assets/nooo-circles.png";
+import { useLeadsContext } from "@/contexts/LeadsContext";
+import noooLogo from "@/assets/nooo-logo.png";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/leads", icon: Users, label: "Alle Leads" },
-  { to: "/leads/urgent", icon: AlertTriangle, label: "Urgent" },
+  { to: "/", icon: LayoutGrid, label: "Overview" },
+  { to: "/leads", icon: Users, label: "Leads Database" },
+  { to: "/leads/urgent", icon: Bell, label: "Priority", showBadge: true },
+  { to: "/archive", icon: Archive, label: "Archive" },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { allLeads } = useLeadsContext();
+  const urgentCount = allLeads.filter(l => l.urgency_score >= 90).length;
 
   const sidebarContent = (
     <>
-      <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={noooLogoWhite} alt="NOOO Logo" className="h-8" />
+      {/* Logo */}
+      <div className="p-6 pb-2">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
+            <img src={noooLogo} alt="Nooo" className="h-4 brightness-0 invert" />
+          </div>
+          <span className="font-display font-bold text-lg text-foreground tracking-tight">Nooo Leads</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden text-sidebar-foreground hover:bg-sidebar-accent"
-          onClick={() => setMobileOpen(false)}
-        >
-          <X className="h-5 w-5" />
-        </Button>
+        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-2">
+          Platform
+        </div>
       </div>
 
-      <nav className="flex-1 px-3 space-y-0.5 mt-2">
+      {/* Navigation */}
+      <nav className="px-3 space-y-0.5 flex-1">
         {navItems.map(item => {
-          const isActive = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to) && item.to !== "/";
+          const isActive = item.to === "/"
+            ? location.pathname === "/"
+            : location.pathname.startsWith(item.to) && item.to !== "/";
           return (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  ? "bg-sidebar-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
+              <item.icon className="h-[18px] w-[18px]" />
+              <span>{item.label}</span>
+              {item.showBadge && urgentCount > 0 && (
+                <span className="ml-auto bg-muted text-muted-foreground text-[10px] py-0.5 px-2 rounded-full font-semibold border border-border">
+                  {urgentCount}
+                </span>
+              )}
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="p-4 space-y-4">
-        <NavLink to="/leads/new" onClick={() => setMobileOpen(false)}>
-          <Button className="w-full justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 rounded-lg">
-            <Plus className="h-4 w-4" />
-            Nieuwe Lead
-          </Button>
-        </NavLink>
-        <div className="flex justify-center opacity-20 px-4">
-          <img src={noooCircles} alt="" className="w-24 brightness-0 invert" />
+      {/* User Profile */}
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
+          <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center text-muted-foreground">
+            <User className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">Nooo User</p>
+            <p className="text-[10px] text-muted-foreground truncate">Workspace Admin</p>
+          </div>
+          <Settings className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
     </>
@@ -70,32 +82,41 @@ export function AppSidebar() {
 
   return (
     <>
+      {/* Mobile toggle */}
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden fixed top-3 left-3 z-50 bg-card shadow-md border"
+        className="lg:hidden fixed top-3 left-3 z-50 bg-card shadow-sm border"
         onClick={() => setMobileOpen(true)}
       >
         <Menu className="h-5 w-5" />
       </Button>
 
+      {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-foreground/30 z-40"
+          className="lg:hidden fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
+      {/* Mobile sidebar */}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-200",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
+        <div className="flex justify-end p-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMobileOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
         {sidebarContent}
       </aside>
 
-      <aside className="hidden lg:flex w-60 min-h-screen bg-sidebar text-sidebar-foreground flex-col shrink-0">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex-col shrink-0">
         {sidebarContent}
       </aside>
     </>
