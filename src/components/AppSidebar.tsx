@@ -113,7 +113,7 @@ export function AppSidebar() {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex-col shrink-0">
+      <aside className="hidden lg:flex w-64 min-h-screen bg-sidebar/80 backdrop-blur-xl border-r border-sidebar-border flex-col shrink-0">
         {sidebarContent}
       </aside>
     </>
