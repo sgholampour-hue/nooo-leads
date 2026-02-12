@@ -20,7 +20,12 @@ export default function Dashboard() {
       toast.success(`Sync voltooid: ${data?.synced || 0} leads gesynchroniseerd`);
       refreshLeads?.();
     } catch (e: any) {
-      toast.error("Sync mislukt: " + (e.message || "Onbekende fout"));
+      // Handle rate limiting (429) gracefully
+      if (e?.status === 429 || e?.message?.includes("429")) {
+        toast.error("Te veel verzoeken. Wacht even en probeer het opnieuw.");
+      } else {
+        toast.error("Sync mislukt: " + (e.message || "Onbekende fout"));
+      }
     } finally {
       setSyncing(false);
     }
