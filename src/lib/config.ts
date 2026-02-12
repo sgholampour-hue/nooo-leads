@@ -1,0 +1,1 @@
+export const GOOGLE_SHEETS_API_KEY = "AIzaSyC4P_ZTfzNh5vQHdHCKtQoWNHtHOE2f3E4";
