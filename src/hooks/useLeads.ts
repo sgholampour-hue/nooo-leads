@@ -1,32 +1,68 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Lead, LeadWithStats, LeadNote, LeadStatusHistory, LeadFilters } from "@/types/leads";
-import { mockLeads, mockNotes, mockStatusHistory } from "@/data/mockLeads";
 import { calculateUrgency } from "@/lib/urgency";
 
-const LEADS_KEY = "nooo_leads";
-const NOTES_KEY = "nooo_notes";
-const STATUS_KEY = "nooo_status_history";
-
-function loadFromStorage<T>(key: string, fallback: T[]): T[] {
-  try {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch { return fallback; }
-}
-
-function saveToStorage<T>(key: string, data: T[]) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
 export function useLeads() {
-  const [leads, setLeadsRaw] = useState<Lead[]>(() => loadFromStorage(LEADS_KEY, mockLeads));
-  const [notes, setNotesRaw] = useState<LeadNote[]>(() => loadFromStorage(NOTES_KEY, mockNotes));
-  const [statusHistory, setStatusHistoryRaw] = useState<LeadStatusHistory[]>(() => loadFromStorage(STATUS_KEY, mockStatusHistory));
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [notes, setNotes] = useState<LeadNote[]>([]);
+  const [statusHistory, setStatusHistory] = useState<LeadStatusHistory[]>([]);
   const [filters, setFilters] = useState<LeadFilters>({ search: "", year: "all", urgency: "all" });
+  const [loading, setLoading] = useState(true);
 
-  const setLeads = useCallback((data: Lead[]) => { setLeadsRaw(data); saveToStorage(LEADS_KEY, data); }, []);
-  const setNotes = useCallback((data: LeadNote[]) => { setNotesRaw(data); saveToStorage(NOTES_KEY, data); }, []);
-  const setStatusHistory = useCallback((data: LeadStatusHistory[]) => { setStatusHistoryRaw(data); saveToStorage(STATUS_KEY, data); }, []);
+  // Fetch leads from Supabase
+  const fetchLeads = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("is_archived", false)
+      .order("created_at", { ascending: false });
+    if (error) console.error("Error fetching leads:", error);
+    else setLeads((data || []) as Lead[]);
+  }, []);
+
+  const fetchNotes = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("lead_notes")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error("Error fetching notes:", error);
+    else setNotes((data || []) as LeadNote[]);
+  }, []);
+
+  const fetchStatusHistory = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("lead_status_history")
+      .select("*")
+      .order("changed_at", { ascending: false });
+    if (error) console.error("Error fetching status:", error);
+    else setStatusHistory((data || []) as LeadStatusHistory[]);
+  }, []);
+
+  useEffect(() => {
+    const loadAll = async () => {
+      setLoading(true);
+      await Promise.all([fetchLeads(), fetchNotes(), fetchStatusHistory()]);
+      setLoading(false);
+    };
+    loadAll();
+
+    // Realtime subscription for leads
+    const channel = supabase
+      .channel("leads-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads" }, () => {
+        fetchLeads();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "lead_notes" }, () => {
+        fetchNotes();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "lead_status_history" }, () => {
+        fetchStatusHistory();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchLeads, fetchNotes, fetchStatusHistory]);
 
   const leadsWithStats: LeadWithStats[] = leads.map(lead => {
     const leadNotes = notes.filter(n => n.lead_id === lead.id);
@@ -59,27 +95,38 @@ export function useLeads() {
     })
     .sort((a, b) => b.urgency_score - a.urgency_score);
 
-  const addLead = (lead: Omit<Lead, "id" | "created_at" | "updated_at" | "gevonden_op">) => {
-    const newLead: Lead = {
+  const addLead = async (lead: Omit<Lead, "id" | "created_at" | "updated_at" | "gevonden_op">) => {
+    const { data, error } = await supabase.from("leads").insert({
       ...lead,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       gevonden_op: new Date().toISOString(),
-    };
-    setLeads([...leads, newLead]);
-    return newLead;
+    }).select().single();
+    if (error) { console.error("Error adding lead:", error); return null; }
+    await fetchLeads();
+    return data as Lead;
   };
 
-  const updateLead = (id: string, updates: Partial<Lead>) => {
-    setLeads(leads.map(l => l.id === id ? { ...l, ...updates, updated_at: new Date().toISOString() } : l));
+  const updateLead = async (id: string, updates: Partial<Lead>) => {
+    const { error } = await supabase.from("leads").update(updates).eq("id", id);
+    if (error) console.error("Error updating lead:", error);
+    else await fetchLeads();
   };
 
-  const deleteLead = (id: string) => {
-    setLeads(leads.filter(l => l.id !== id));
-    setNotes(notes.filter(n => n.lead_id !== id));
-    setStatusHistory(statusHistory.filter(s => s.lead_id !== id));
+  const deleteLead = async (id: string) => {
+    await supabase.from("lead_notes").delete().eq("lead_id", id);
+    await supabase.from("lead_status_history").delete().eq("lead_id", id);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    if (error) console.error("Error deleting lead:", error);
+    else await fetchLeads();
   };
+
+  const setNotesWithSync = useCallback(async (newNotes: LeadNote[]) => {
+    // This is used by useNotes hook - we just refetch
+    setNotes(newNotes);
+  }, []);
+
+  const setStatusHistoryWithSync = useCallback(async (newHistory: LeadStatusHistory[]) => {
+    setStatusHistory(newHistory);
+  }, []);
 
   return {
     leads: filteredLeads,
@@ -91,7 +138,9 @@ export function useLeads() {
     addLead,
     updateLead,
     deleteLead,
-    setNotes,
-    setStatusHistory,
+    setNotes: setNotesWithSync,
+    setStatusHistory: setStatusHistoryWithSync,
+    loading,
+    refreshLeads: fetchLeads,
   };
 }
