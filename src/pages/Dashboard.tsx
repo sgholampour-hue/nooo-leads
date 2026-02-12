@@ -35,13 +35,13 @@ export default function Dashboard() {
   const yearCounts: Record<string, number> = {};
   allLeads.forEach(l => {
     const yr = l.expiration_year || "Unknown";
-    if (yr === "Unknown") return;
+    if (yr === "Unknown" || yr === "") return;
     const y = parseInt(yr);
-    if (y < 2027) return;
-    if (y >= 2028) {
-      yearCounts["2028+"] = (yearCounts["2028+"] || 0) + 1;
-    } else {
-      yearCounts[yr] = (yearCounts[yr] || 0) + 1;
+    if (isNaN(y)) return;
+    if (y >= 2030) {
+      yearCounts["2030+"] = (yearCounts["2030+"] || 0) + 1;
+    } else if (y >= 2027) {
+      yearCounts[String(y)] = (yearCounts[String(y)] || 0) + 1;
     }
   });
   const chartData = Object.entries(yearCounts)
