@@ -135,9 +135,9 @@ export default function Dashboard() {
                   <div className="w-full bg-muted rounded-t-md h-48 relative flex items-end overflow-hidden">
                     <div
                       className={`w-full rounded-t-md transition-colors ${
-                        item.year === chartData[0]?.year
-                          ? 'bg-[hsl(152,40%,35%)] group-hover:bg-[hsl(152,40%,30%)]'
-                          : 'bg-[hsl(152,30%,65%)] group-hover:bg-[hsl(152,30%,55%)]'
+                        item.count === maxCount
+                          ? 'bg-foreground group-hover:bg-foreground/90'
+                          : 'bg-muted-foreground/30 group-hover:bg-muted-foreground/50'
                       }`}
                       style={{ height: `${(item.count / maxCount) * 100}%` }}
                     />
