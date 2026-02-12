@@ -19,6 +19,7 @@ import {
   Calendar, Mail, Linkedin
 } from "lucide-react";
 import { useState } from "react";
+import { StatusTimeline } from "@/components/StatusTimeline";
 import { toast } from "sonner";
 
 const noteTypeLabels: Record<string, string> = {
@@ -40,7 +41,7 @@ const noteTypeColors: Record<string, string> = {
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { allLeads, notes: allNotes, setNotes: setAllNotes } = useLeadsContext();
+  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory } = useLeadsContext();
   const lead = allLeads.find(l => l.id === id);
 
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(allNotes, setAllNotes, id || "");
@@ -269,6 +270,9 @@ export default function LeadDetail() {
             </div>
           </Card>
         </div>
+
+        {/* Status Timeline */}
+        <StatusTimeline history={statusHistory.filter(s => s.lead_id === id)} />
       </div>
     </AppLayout>
   );
