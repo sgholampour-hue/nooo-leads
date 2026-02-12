@@ -157,7 +157,7 @@ export default function LeadDetail() {
             </span>
             {!isEditing && (
               <Button variant="outline" size="sm" className="text-xs" onClick={startEditing}>
-                <Edit className="mr-1.5 h-3.5 w-3.5" /> Edit
+                <Edit className="mr-1.5 h-3.5 w-3.5" /> Bewerken
               </Button>
             )}
           </div>
@@ -167,25 +167,25 @@ export default function LeadDetail() {
         <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StaggerItem>
             <HoverCard className="bg-card border border-border rounded-xl p-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiry</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiratie</p>
               <p className="text-lg font-display font-bold text-foreground">{lead.expiration_year}</p>
             </HoverCard>
           </StaggerItem>
           <StaggerItem>
             <HoverCard className="bg-card border border-border rounded-xl p-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Duration</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Duur</p>
               <p className="text-lg font-display font-bold text-foreground">{lead.lease_duration}</p>
             </HoverCard>
           </StaggerItem>
           <StaggerItem>
             <HoverCard className="bg-card border border-border rounded-xl p-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Relocation</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Verhuizing</p>
               <p className="text-lg font-display font-bold text-foreground">{lead.relocation_start}</p>
             </HoverCard>
           </StaggerItem>
           <StaggerItem>
             <HoverCard className="bg-card border border-border rounded-xl p-4">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Notes</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Notities</p>
               <p className="text-lg font-display font-bold text-foreground">{notes.length}</p>
             </HoverCard>
           </StaggerItem>
@@ -197,13 +197,13 @@ export default function LeadDetail() {
             {isEditing ? (
               <>
                 <div className="flex justify-between items-center mb-5">
-                  <h3 className="font-display font-bold text-foreground tracking-tight">Edit Lead</h3>
+                  <h3 className="font-display font-bold text-foreground tracking-tight">Lead Bewerken</h3>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" className="text-xs" onClick={() => setIsEditing(false)}>
-                      <X className="mr-1 h-3.5 w-3.5" /> Cancel
+                      <X className="mr-1 h-3.5 w-3.5" /> Annuleer
                     </Button>
                     <Button size="sm" className="text-xs" onClick={handleSaveEdit}>
-                      <Save className="mr-1 h-3.5 w-3.5" /> Save
+                      <Save className="mr-1 h-3.5 w-3.5" /> Opslaan
                     </Button>
                   </div>
                 </div>
@@ -250,13 +250,13 @@ export default function LeadDetail() {
               </>
             ) : (
               <>
-                <h3 className="font-display font-bold text-foreground tracking-tight mb-5">Details</h3>
+                <h3 className="font-display font-bold text-foreground tracking-tight mb-5">Gegevens</h3>
                 <div className="space-y-4">
                   <InfoRow icon={<Globe className="h-4 w-4" />} label="Website" value={lead.website} isLink />
                   <InfoRow icon={<MapPin className="h-4 w-4" />} label="Locatie" value={lead.office_address} />
                   <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={lead.cfo_email} isEmail />
                   <InfoRow icon={<Linkedin className="h-4 w-4" />} label="LinkedIn" value={lead.linkedin_page} isLink />
-                  <InfoRow icon={<Clock className="h-4 w-4" />} label="Gevonden op" value={new Date(lead.gevonden_op).toLocaleDateString("nl-NL")} />
+                  <InfoRow icon={<Clock className="h-4 w-4" />} label="Gevonden Op" value={new Date(lead.gevonden_op).toLocaleDateString("nl-NL")} />
                 </div>
 
                 {lead.snippet && (
@@ -270,7 +270,7 @@ export default function LeadDetail() {
                         className="text-xs text-foreground font-medium mt-1.5 hover:underline"
                         onClick={() => setShowFullSnippet(!showFullSnippet)}
                       >
-                        {showFullSnippet ? "Less" : "More"}
+                        {showFullSnippet ? "Minder" : "Meer"}
                       </button>
                     )}
                   </div>
@@ -306,17 +306,17 @@ export default function LeadDetail() {
           <div className="lg:col-span-3 bg-card border border-border rounded-xl p-5 sm:p-6">
             <div className="flex justify-between items-center mb-5">
               <h3 className="font-display font-bold text-foreground tracking-tight">
-                Notes <span className="text-muted-foreground font-normal text-sm">({notes.length})</span>
+                Notities <span className="text-muted-foreground font-normal text-sm">({notes.length})</span>
               </h3>
               <Button size="sm" className="text-xs gap-1.5" onClick={() => setShowNoteForm(true)}>
-                <Plus className="h-3.5 w-3.5" /> Add Note
+                <Plus className="h-3.5 w-3.5" /> Notitie Toevoegen
               </Button>
             </div>
 
             {showNoteForm && (
               <div className="p-4 mb-4 bg-muted/50 border border-border rounded-lg">
                 <Textarea
-                  placeholder="Write your note..."
+                  placeholder="Schrijf je notitie..."
                   value={newNoteText}
                   onChange={(e) => setNewNoteText(e.target.value)}
                   rows={3}
@@ -336,9 +336,9 @@ export default function LeadDetail() {
                     </SelectContent>
                   </Select>
                   <div className="flex gap-2 ml-auto">
-                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowNoteForm(false)}>Cancel</Button>
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowNoteForm(false)}>Annuleer</Button>
                     <Button size="sm" className="text-xs" onClick={handleSaveNote}>
-                      <Save className="mr-1.5 h-3.5 w-3.5" /> Save
+                      <Save className="mr-1.5 h-3.5 w-3.5" /> Opslaan
                     </Button>
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export default function LeadDetail() {
               {notes.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
                   <MessageSquare className="mx-auto h-10 w-10 mb-3 opacity-20" />
-                  <p className="text-sm">No notes yet</p>
+                  <p className="text-sm">Nog geen notities</p>
                 </div>
               )}
               {notes.map(note => (
@@ -375,14 +375,14 @@ export default function LeadDetail() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => togglePin(note.id)}>
                           <Pin className="mr-2 h-4 w-4" />
-                          {note.is_pinned ? "Unpin" : "Pin"}
+                          {note.is_pinned ? "Losmaken" : "Vastpinnen"}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { setEditingNoteId(note.id); setEditNoteText(note.note_text); }}>
-                          <Edit className="mr-2 h-4 w-4" /> Edit
+                          <Edit className="mr-2 h-4 w-4" /> Bewerken
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDeleteNote(note.id)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Trash2 className="mr-2 h-4 w-4" /> Verwijderen
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -392,8 +392,8 @@ export default function LeadDetail() {
                     <div className="space-y-2">
                       <Textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={3} className="text-sm" />
                       <div className="flex gap-2 justify-end">
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setEditingNoteId(null)}>Cancel</Button>
-                        <Button size="sm" className="text-xs" onClick={() => handleUpdateNote(note.id)}>Save</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setEditingNoteId(null)}>Annuleer</Button>
+                        <Button size="sm" className="text-xs" onClick={() => handleUpdateNote(note.id)}>Opslaan</Button>
                       </div>
                     </div>
                   ) : (
@@ -403,7 +403,7 @@ export default function LeadDetail() {
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelativeTime(note.created_at)}</span>
                     {note.created_by && <span className="flex items-center gap-1"><User className="h-3 w-3" />{note.created_by}</span>}
-                    {note.created_at !== note.updated_at && <span className="italic">(edited)</span>}
+                    {note.created_at !== note.updated_at && <span className="italic">(bewerkt)</span>}
                   </div>
                 </div>
               ))}

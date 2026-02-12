@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useLeadsContext } from "@/contexts/LeadsContext";
 
 const routeLabels: Record<string, string> = {
-  "/": "Overview",
+  "/": "Overzicht",
   "/leads": "Database",
-  "/leads/urgent": "Priority",
-  "/leads/new": "New Lead",
-  "/archive": "Archive",
+  "/leads/urgent": "Prioriteit",
+  "/leads/new": "Nieuwe Lead",
+  "/archive": "Archief",
 };
 
 export function TopHeader() {
@@ -16,7 +16,7 @@ export function TopHeader() {
   const navigate = useNavigate();
   const { filters, setFilters } = useLeadsContext();
 
-  const label = routeLabels[location.pathname] || "Detail";
+  const label = routeLabels[location.pathname] || "Details";
 
   return (
     <header className="h-14 border-b border-border bg-card/80 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-20">
@@ -33,7 +33,7 @@ export function TopHeader() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Zoeken..."
             value={filters.search}
             onChange={e => setFilters({ ...filters, search: e.target.value })}
             className="pl-9 pr-4 py-1.5 bg-muted border border-border rounded-md text-xs focus:ring-1 focus:ring-foreground focus:outline-none w-48 transition-all focus:w-64 focus:bg-card placeholder:text-muted-foreground"
@@ -50,7 +50,7 @@ export function TopHeader() {
           onClick={() => navigate("/leads/new")}
         >
           <Plus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Add Lead</span>
+          <span className="hidden sm:inline">Nieuwe Lead</span>
         </Button>
       </div>
     </header>

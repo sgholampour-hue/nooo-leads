@@ -62,7 +62,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
         <div className="flex items-end justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
-              {urgentOnly ? "Priority" : "Leads Database"}
+              {urgentOnly ? "Prioriteit" : "Leads Database"}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Filter records..."
+                placeholder="Filter resultaten..."
                 value={filters.search}
                 onChange={e => setFilters({ ...filters, search: e.target.value })}
                 className="pl-9 pr-4 py-1.5 bg-muted border border-border rounded-md text-xs focus:ring-1 focus:ring-foreground focus:outline-none w-48 focus:bg-card placeholder:text-muted-foreground"
@@ -81,10 +81,10 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
                 <SelectValue placeholder="Urgency: All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Urgency: All</SelectItem>
-                <SelectItem value="high">High (90+)</SelectItem>
-                <SelectItem value="medium">Medium (50-89)</SelectItem>
-                <SelectItem value="low">Low (&lt;50)</SelectItem>
+                <SelectItem value="all">Urgentie: Alles</SelectItem>
+                <SelectItem value="high">Hoog (90+)</SelectItem>
+                <SelectItem value="medium">Middel (50-89)</SelectItem>
+                <SelectItem value="low">Laag (&lt;50)</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => exportToCSV(displayLeads)}>
@@ -101,14 +101,14 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Filter records..."
+                placeholder="Filter resultaten..."
                 value={filters.search}
                 onChange={e => setFilters({ ...filters, search: e.target.value })}
                 className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-md text-xs focus:ring-1 focus:ring-foreground focus:outline-none focus:bg-card placeholder:text-muted-foreground"
               />
             </div>
             {displayLeads.length === 0 && (
-              <p className="text-center py-12 text-muted-foreground text-sm">No leads found</p>
+              <p className="text-center py-12 text-muted-foreground text-sm">Geen leads gevonden</p>
             )}
             {displayLeads.map(lead => (
               <Card
@@ -144,18 +144,18 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Score</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Location</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bedrijf</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Locatie</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lease Status</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20 hidden xl:table-cell">Contact</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Notes</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Notities</th>
                 </tr>
               </thead>
               <tbody>
                 {displayLeads.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center py-16 text-muted-foreground text-sm">
-                      No leads found
+                      Geen leads gevonden
                     </td>
                   </tr>
                 )}
@@ -209,10 +209,10 @@ export default function LeadsList({ urgentOnly = false }: LeadsListProps) {
 
             {/* Footer */}
             <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-              <span>Showing 1-{displayLeads.length} of {displayLeads.length}</span>
+              <span>Toont 1-{displayLeads.length} van {displayLeads.length}</span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="text-xs h-7" disabled>Prev</Button>
-                <Button variant="outline" size="sm" className="text-xs h-7" disabled>Next</Button>
+                <Button variant="outline" size="sm" className="text-xs h-7" disabled>Vorige</Button>
+                <Button variant="outline" size="sm" className="text-xs h-7" disabled>Volgende</Button>
               </div>
             </div>
           </div>
