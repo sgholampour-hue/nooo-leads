@@ -1,11 +1,8 @@
-import { Building2, AlertCircle, Mail, TrendingUp } from "lucide-react";
-import { StatCard } from "@/components/StatCard";
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
-import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import noooCircles from "@/assets/nooo-circles.png";
+import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from "recharts";
+import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal } from "lucide-react";
 
 export default function Dashboard() {
   const { allLeads, notes } = useLeadsContext();
@@ -14,99 +11,199 @@ export default function Dashboard() {
   const totalLeads = allLeads.length;
   const urgentLeads = allLeads.filter(l => l.urgency_score >= 90).length;
   const withEmail = allLeads.filter(l => l.cfo_email).length;
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-  const recentLeads = allLeads.filter(l => l.created_at >= sevenDaysAgo).length;
+  const verifiedPct = totalLeads > 0 ? Math.round((withEmail / totalLeads) * 100) : 0;
+
+  // Estimate pipeline value (mock)
+  const pipelineValue = `€${(totalLeads * 12.5).toFixed(1)}K`;
 
   // Chart data: leads by expiration year
   const yearCounts: Record<string, number> = {};
   allLeads.forEach(l => {
     const yr = l.expiration_year || "Unknown";
-    yearCounts[yr] = (yearCounts[yr] || 0) + 1;
+    if (yr === "Unknown") return;
+    const y = parseInt(yr);
+    if (y >= 2028) {
+      yearCounts["2028+"] = (yearCounts["2028+"] || 0) + 1;
+    } else {
+      yearCounts[yr] = (yearCounts[yr] || 0) + 1;
+    }
   });
   const chartData = Object.entries(yearCounts)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([year, count]) => ({ year, count }));
 
-  const getBarColor = (year: string) => {
-    const y = parseInt(year);
-    const current = new Date().getFullYear();
-    if (isNaN(y)) return "hsl(var(--muted-foreground))";
-    if (y <= current) return "hsl(var(--destructive))";
-    if (y <= current + 1) return "hsl(var(--warning))";
-    return "hsl(var(--success))";
-  };
+  const maxCount = Math.max(...chartData.map(d => d.count), 1);
 
-  // Recent notes across all leads
+  // Recent notes
   const recentNotes = [...notes]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 8)
+    .slice(0, 5)
     .map(note => {
       const lead = allLeads.find(l => l.id === note.lead_id);
       return { ...note, bedrijfsnaam: lead?.bedrijfsnaam || "Onbekend" };
     });
 
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHrs = diffMs / (1000 * 60 * 60);
+    if (diffHrs < 24) {
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    }
+    if (diffHrs < 48) return "Yesterday";
+    return d.toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+  };
+
   return (
     <AppLayout>
-      <div className="space-y-5 sm:space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-end justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground text-sm">Overzicht van alle vastgoed leads</p>
+            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Overview</h1>
+            <p className="text-muted-foreground text-xs mt-1">Portfolio performance & incoming signals.</p>
           </div>
-          <img src={noooCircles} alt="" className="h-8 sm:h-10 opacity-15 hidden sm:block" />
+          <select className="bg-card border border-border text-xs rounded-md px-3 py-1.5 focus:ring-1 focus:ring-foreground focus:outline-none text-muted-foreground font-medium">
+            <option>Last 30 Days</option>
+            <option>Last Quarter</option>
+            <option>YTD</option>
+          </select>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatCard title="Totaal Leads" value={totalLeads} icon={<Building2 className="h-5 w-5" />} />
-          <StatCard title="Hoge Urgentie" value={urgentLeads} icon={<AlertCircle className="h-5 w-5" />} subtitle="Expireert ≤ dit jaar" />
-          <StatCard title="Met Email" value={withEmail} icon={<Mail className="h-5 w-5" />} subtitle={`${totalLeads > 0 ? Math.round(withEmail / totalLeads * 100) : 0}% bereikbaar`} />
-          <StatCard title="Nieuw (7d)" value={recentLeads} icon={<TrendingUp className="h-5 w-5" />} />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <Card className="p-4 sm:p-5">
-            <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Leads per Expiratie Jaar</h3>
-            <div className="h-48 sm:h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="year" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip />
-                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={getBarColor(entry.year)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Leads */}
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Total Leads</p>
+              </div>
+              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{totalLeads}</h3>
             </div>
-          </Card>
+            <div className="flex items-center gap-1 text-success bg-success/10 border border-success/20 w-fit px-2 py-0.5 rounded-md text-[10px] font-bold">
+              <span>+12.5%</span>
+            </div>
+          </div>
 
-          <Card className="p-4 sm:p-5">
-            <h3 className="font-semibold text-foreground mb-4 text-sm sm:text-base">Recente Activiteit</h3>
-            <div className="space-y-2 sm:space-y-3 max-h-48 sm:max-h-64 overflow-y-auto">
+          {/* High Urgency */}
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">High Urgency</p>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
+              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{urgentLeads}</h3>
+            </div>
+            <p className="text-destructive text-[10px] font-medium">Requires immediate action</p>
+          </div>
+
+          {/* Verified */}
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Verified</p>
+              </div>
+              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{verifiedPct}%</h3>
+            </div>
+            <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
+          </div>
+
+          {/* Pipeline */}
+          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Pipeline</p>
+              </div>
+              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{pipelineValue}</h3>
+            </div>
+            <div className="w-full bg-muted rounded-full h-1 mt-auto">
+              <div className="bg-foreground h-1 rounded-full" style={{ width: `${verifiedPct}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Chart + Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Lease Expirations Chart */}
+          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-6">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h3 className="font-display font-bold text-lg text-foreground tracking-tight">Lease Expirations</h3>
+                <p className="text-muted-foreground text-xs">Distribution by year</p>
+              </div>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Minimalist Bar Chart */}
+            <div className="h-56 flex items-end justify-between gap-6 px-4 pb-2 border-b border-border">
+              {chartData.map((item) => (
+                <div key={item.year} className="flex flex-col items-center gap-3 flex-1 group">
+                  <div className="w-full bg-muted rounded-t-md h-48 relative flex items-end overflow-hidden">
+                    <div
+                      className="w-full bg-foreground group-hover:bg-foreground/80 transition-colors rounded-t-md"
+                      style={{ height: `${(item.count / maxCount) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground">{item.year}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-card border border-border rounded-xl p-6 flex flex-col">
+            <h3 className="font-display font-bold text-lg text-foreground tracking-tight mb-6">Recent Activity</h3>
+            <div className="space-y-5 flex-1 overflow-hidden relative">
+              {/* Timeline line */}
+              <div className="absolute left-[15px] top-2 bottom-0 w-px bg-border" />
+
               {recentNotes.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-8">Nog geen activiteit</p>
+                <p className="text-muted-foreground text-xs text-center py-8">No recent activity</p>
               )}
-              {recentNotes.map(note => (
+
+              {recentNotes.map((note, i) => (
                 <div
                   key={note.id}
-                  className="flex items-start gap-3 p-2.5 sm:p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="flex gap-4 relative cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => navigate(`/leads/${note.lead_id}`)}
                 >
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{note.bedrijfsnaam}</p>
-                    <p className="text-xs text-muted-foreground truncate">{note.note_text}</p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">
-                      {new Date(note.created_at).toLocaleDateString("nl-NL")}
+                  <div className={`w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center shrink-0 z-10 shadow-sm ${
+                    note.note_type === 'contact_attempt' || note.note_type === 'follow_up'
+                      ? 'text-foreground'
+                      : note.note_type === 'meeting' || note.note_type === 'proposal'
+                      ? 'text-foreground'
+                      : i === recentNotes.length - 1
+                      ? 'text-destructive'
+                      : 'text-foreground'
+                  }`}>
+                    {note.note_type === 'general' ? (
+                      <FileEdit className="h-3.5 w-3.5" />
+                    ) : note.note_type === 'contact_attempt' || note.note_type === 'meeting' ? (
+                      <CheckCircle className="h-3.5 w-3.5" />
+                    ) : (
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-foreground text-xs font-semibold">
+                      {note.note_type === 'general' ? 'Note added' :
+                       note.note_type === 'contact_attempt' ? 'Contact Attempt' :
+                       note.note_type === 'meeting' ? 'Meeting' :
+                       note.note_type === 'follow_up' ? 'Follow-up' :
+                       note.note_type === 'proposal' ? 'Proposal Sent' : 'Update'}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      <span className="text-foreground/80 font-medium">{note.bedrijfsnaam}</span>
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1 font-mono">{formatTime(note.created_at)}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
