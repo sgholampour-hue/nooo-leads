@@ -11,6 +11,7 @@ export interface Lead {
   cfo_email: string;
   snippet: string;
   gevonden_op: string;
+  is_archived: boolean;
   created_at: string;
   updated_at: string;
 }

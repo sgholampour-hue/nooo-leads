@@ -14,7 +14,7 @@ import {
 import {
   ArrowLeft, ExternalLink, Edit, Save, Plus, Pin, Trash2,
   MoreVertical, MessageSquare, Clock, User, Globe, MapPin,
-  Calendar, Mail, Linkedin, X
+  Calendar, Mail, Linkedin, X, Archive
 } from "lucide-react";
 import { useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
@@ -39,8 +39,9 @@ function getScoreColor(score: number) {
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead } = useLeadsContext();
-  const lead = allLeads.find(l => l.id === id);
+  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead, archiveLead, unarchiveLead } = useLeadsContext();
+  const { archivedLeads } = useLeadsContext();
+  const lead = allLeads.find(l => l.id === id) || archivedLeads.find(l => l.id === id);
 
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(allNotes, setAllNotes, id || "");
 
@@ -156,9 +157,29 @@ export default function LeadDetail() {
               {lead.urgency_score > 0 ? lead.urgency_score : "—"}
             </span>
             {!isEditing && (
-              <Button variant="outline" size="sm" className="text-xs" onClick={startEditing}>
-                <Edit className="mr-1.5 h-3.5 w-3.5" /> Bewerken
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={async () => {
+                    if (lead.is_archived) {
+                      await unarchiveLead(lead.id);
+                      toast.success("Lead hersteld uit archief");
+                    } else {
+                      await archiveLead(lead.id);
+                      toast.success("Lead gearchiveerd");
+                      navigate("/leads");
+                    }
+                  }}
+                >
+                  <Archive className="mr-1.5 h-3.5 w-3.5" />
+                  {lead.is_archived ? "Herstellen" : "Archiveren"}
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs" onClick={startEditing}>
+                  <Edit className="mr-1.5 h-3.5 w-3.5" /> Bewerken
+                </Button>
+              </>
             )}
           </div>
         </div>
