@@ -3,7 +3,8 @@ import { LayoutDashboard, Users, AlertTriangle, Plus, Menu, X } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import noooLogo from "@/assets/nooo-logo.png";
+import noooLogoWhite from "@/assets/nooo-logo-white.png";
+import noooCircles from "@/assets/nooo-circles.png";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -19,7 +20,7 @@ export function AppSidebar() {
     <>
       <div className="p-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={noooLogo} alt="NOOO Logo" className="h-10 brightness-0 invert" />
+          <img src={noooLogoWhite} alt="NOOO Logo" className="h-8" />
         </div>
         <Button
           variant="ghost"
@@ -53,13 +54,16 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-4">
         <NavLink to="/leads/new" onClick={() => setMobileOpen(false)}>
           <Button className="w-full justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 rounded-lg">
             <Plus className="h-4 w-4" />
             Nieuwe Lead
           </Button>
         </NavLink>
+        <div className="flex justify-center opacity-20 px-4">
+          <img src={noooCircles} alt="" className="w-24 brightness-0 invert" />
+        </div>
       </div>
     </>
   );
@@ -84,7 +88,7 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-60 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-200",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
