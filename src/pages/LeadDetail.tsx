@@ -20,6 +20,7 @@ import { useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { toast } from "sonner";
 import { PageTransition, StaggerContainer, StaggerItem, HoverCard } from "@/components/PageTransition";
+import { leadSchema, noteSchema } from "@/lib/validation";
 
 const noteTypeLabels: Record<string, string> = {
   general: "Algemeen",
@@ -93,6 +94,11 @@ export default function LeadDetail() {
   };
 
   const handleSaveEdit = () => {
+    const result = leadSchema.safeParse(editForm);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
     updateLead(lead.id, editForm);
     setIsEditing(false);
     toast.success("Lead bijgewerkt");
@@ -100,6 +106,11 @@ export default function LeadDetail() {
 
   const handleSaveNote = () => {
     if (!newNoteText.trim()) return;
+    const result = noteSchema.safeParse({ note_text: newNoteText, note_type: newNoteType });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
     addNote(newNoteText, newNoteType);
     setNewNoteText("");
     setNewNoteType("general");

@@ -75,25 +75,30 @@ Deno.serve(async (req) => {
     const leadsToUpsert = dataRows.map((row, idx) => {
       const get = (name: string) => {
         const i = col(name);
-        return i >= 0 && i < row.length ? row[i]?.trim() || "" : "";
+        const val = i >= 0 && i < row.length ? row[i]?.trim() || "" : "";
+        return val.substring(0, 2000); // Limit all field lengths
       };
 
       const kvkStr = get("kvk_number");
       const kvkNum = kvkStr ? parseInt(kvkStr, 10) : null;
 
+      const bedrijfsnaam = get("bedrijfsnaam") || `Unknown ${idx}`;
+      const cfo_email = get("cfo_email");
+      const expiration_year = get("expiration_year");
+
       return {
-        kvk_number: isNaN(kvkNum as number) ? null : kvkNum,
-        bedrijfsnaam: get("bedrijfsnaam") || `Unknown ${idx}`,
-        website: get("website"),
-        office_address: get("office_address"),
-        relocation_start: get("relocation_start"),
-        expiration_year: get("expiration_year"),
-        lease_duration: get("lease_duration"),
-        linkedin_page: get("linkedin_page"),
-        cfo_email: get("cfo_email"),
+        kvk_number: isNaN(kvkNum as number) || (kvkNum as number) > 99999999 || (kvkNum as number) < 0 ? null : kvkNum,
+        bedrijfsnaam: bedrijfsnaam.substring(0, 200),
+        website: get("website").substring(0, 500),
+        office_address: get("office_address").substring(0, 500),
+        relocation_start: get("relocation_start").substring(0, 50),
+        expiration_year: /^\d{4}$/.test(expiration_year) ? expiration_year : "",
+        lease_duration: get("lease_duration").substring(0, 50),
+        linkedin_page: get("linkedin_page").substring(0, 500),
+        cfo_email: cfo_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cfo_email) ? cfo_email.substring(0, 255) : "",
         snippet: get("snippet"),
         gevonden_op: get("gevonden_op") || new Date().toISOString(),
-        sheet_row_index: idx + 2, // 1-indexed header + data
+        sheet_row_index: idx + 2,
         is_archived: false,
       };
     });
