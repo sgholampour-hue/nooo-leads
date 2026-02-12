@@ -1,8 +1,8 @@
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
-import { BarChart, Bar, XAxis, ResponsiveContainer, Cell } from "recharts";
 import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal } from "lucide-react";
+import { PageTransition, StaggerContainer, StaggerItem, HoverCard } from "@/components/PageTransition";
 
 export default function Dashboard() {
   const { allLeads, notes } = useLeadsContext();
@@ -12,9 +12,6 @@ export default function Dashboard() {
   const urgentLeads = allLeads.filter(l => l.urgency_score >= 90).length;
   const withEmail = allLeads.filter(l => l.cfo_email).length;
   const verifiedPct = totalLeads > 0 ? Math.round((withEmail / totalLeads) * 100) : 0;
-
-  // Estimate pipeline value (mock)
-  const pipelineValue = `€${(totalLeads * 12.5).toFixed(1)}K`;
 
   // Chart data: leads by expiration year
   const yearCounts: Record<string, number> = {};
@@ -57,7 +54,7 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <PageTransition className="space-y-6">
         {/* Header */}
         <div className="flex items-end justify-between">
           <div>
@@ -72,56 +69,49 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Total Leads */}
-          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Total Leads</p>
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Total Leads</p>
+                </div>
+                <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{totalLeads}</h3>
               </div>
-              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{totalLeads}</h3>
-            </div>
-            <div className="flex items-center gap-1 text-success bg-success/10 border border-success/20 w-fit px-2 py-0.5 rounded-md text-[10px] font-bold">
-              <span>+12.5%</span>
-            </div>
-          </div>
+              <div className="flex items-center gap-1 text-success bg-success/10 border border-success/20 w-fit px-2 py-0.5 rounded-md text-[10px] font-bold">
+                <span>+12.5%</span>
+              </div>
+            </HoverCard>
+          </StaggerItem>
 
           {/* High Urgency */}
-          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">High Urgency</p>
-                <AlertTriangle className="h-4 w-4 text-destructive" />
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">High Urgency</p>
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </div>
+                <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{urgentLeads}</h3>
               </div>
-              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{urgentLeads}</h3>
-            </div>
-            <p className="text-destructive text-[10px] font-medium">Requires immediate action</p>
-          </div>
+              <p className="text-destructive text-[10px] font-medium">Requires immediate action</p>
+            </HoverCard>
+          </StaggerItem>
 
           {/* Verified */}
-          <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Verified</p>
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Verified</p>
+                </div>
+                <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{verifiedPct}%</h3>
               </div>
-              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{verifiedPct}%</h3>
-            </div>
-            <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
-          </div>
-
-          {/* Pipeline */}
-          <div className="bg-[hsl(45,100%,97%)] border border-[hsl(45,80%,75%)] rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[hsl(38,60%,40%)] text-xs font-semibold uppercase tracking-wide">Pipeline</p>
-              </div>
-              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{pipelineValue}</h3>
-            </div>
-            <div className="w-full bg-[hsl(45,60%,85%)] rounded-full h-1 mt-auto">
-              <div className="bg-[hsl(38,92%,50%)] h-1 rounded-full" style={{ width: `${verifiedPct}%` }} />
-            </div>
-          </div>
-        </div>
+              <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
+            </HoverCard>
+          </StaggerItem>
+        </StaggerContainer>
 
         {/* Chart + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -209,7 +199,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
+      </PageTransition>
     </AppLayout>
   );
 }

@@ -9,6 +9,7 @@ import LeadsList from "./pages/LeadsList";
 import LeadDetail from "./pages/LeadDetail";
 import NewLead from "./pages/NewLead";
 import NotFound from "./pages/NotFound";
+import Archive from "./pages/Archive";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/leads" element={<LeadsList />} />
             <Route path="/leads/urgent" element={<LeadsList urgentOnly />} />
+            <Route path="/leads/archive" element={<Archive />} />
             <Route path="/leads/new" element={<NewLead />} />
             <Route path="/leads/:id" element={<LeadDetail />} />
             <Route path="*" element={<NotFound />} />
