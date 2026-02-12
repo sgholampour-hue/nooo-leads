@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
+import { leadSchema } from "@/lib/validation";
 
 export default function NewLead() {
   const navigate = useNavigate();
@@ -28,11 +29,16 @@ export default function NewLead() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.bedrijfsnaam || !form.kvk_number) {
-      toast.error("Bedrijfsnaam en KvK nummer zijn verplicht");
+    const dataToValidate = {
+      ...form,
+      kvk_number: form.kvk_number ? parseInt(form.kvk_number, 10) : null,
+    };
+    const result = leadSchema.safeParse(dataToValidate);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
       return;
     }
-    addLead({ ...form, kvk_number: parseInt(form.kvk_number, 10) } as any);
+    addLead(dataToValidate as any);
     toast.success("Lead aangemaakt!");
     navigate("/leads");
   };
@@ -89,10 +95,10 @@ export default function NewLead() {
                 <Input id="linkedin" value={form.linkedin_page} onChange={e => update("linkedin_page", e.target.value)} />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="snippet">Bedrijfsomschrijving</Label>
-              <Textarea id="snippet" value={form.snippet} onChange={e => update("snippet", e.target.value)} rows={4} />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="snippet">Bedrijfsomschrijving</Label>
+                <Textarea id="snippet" value={form.snippet} onChange={e => update("snippet", e.target.value)} rows={4} maxLength={2000} />
+              </div>
             <div className="flex gap-2 justify-end pt-2">
               <Button variant="outline" type="button" onClick={() => navigate(-1)}>Annuleer</Button>
               <Button type="submit"><Save className="mr-2 h-4 w-4" /> Opslaan</Button>
