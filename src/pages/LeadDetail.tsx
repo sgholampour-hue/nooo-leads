@@ -2,15 +2,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { useNotes } from "@/hooks/useNotes";
 import { AppLayout } from "@/components/AppLayout";
-import { UrgencyBadge } from "@/components/UrgencyBadge";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
@@ -32,13 +28,12 @@ const noteTypeLabels: Record<string, string> = {
   proposal: "Voorstel",
 };
 
-const noteTypeColors: Record<string, string> = {
-  general: "bg-muted text-muted-foreground",
-  contact_attempt: "bg-primary/10 text-primary",
-  meeting: "bg-success/10 text-success",
-  follow_up: "bg-warning/10 text-warning",
-  proposal: "bg-destructive/10 text-destructive",
-};
+function getScoreColor(score: number) {
+  if (score >= 90) return "text-destructive";
+  if (score >= 70) return "text-warning";
+  if (score >= 50) return "text-foreground";
+  return "text-muted-foreground";
+}
 
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +66,7 @@ export default function LeadDetail() {
     return (
       <AppLayout>
         <div className="text-center py-20">
-          <p className="text-muted-foreground">Lead niet gevonden</p>
+          <p className="text-muted-foreground text-sm">Lead niet gevonden</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/leads")}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Terug naar leads
           </Button>
@@ -140,196 +135,233 @@ export default function LeadDetail() {
 
   return (
     <AppLayout>
-      <div className="space-y-5">
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/leads")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+          <button
+            onClick={() => navigate("/leads")}
+            className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+          </button>
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{lead.bedrijfsnaam}</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">KvK: {lead.kvk_number}</p>
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground tracking-tight truncate">
+              {lead.bedrijfsnaam}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">KvK: {lead.kvk_number}</p>
           </div>
-          <div className="shrink-0">
-            <UrgencyBadge score={lead.urgency_score} />
+          <div className="shrink-0 flex items-center gap-2">
+            <span className={`text-lg font-display font-bold tabular-nums ${getScoreColor(lead.urgency_score)}`}>
+              {lead.urgency_score > 0 ? lead.urgency_score : "—"}
+            </span>
+            {!isEditing && (
+              <Button variant="outline" size="sm" className="text-xs" onClick={startEditing}>
+                <Edit className="mr-1.5 h-3.5 w-3.5" /> Edit
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiry</p>
+            <p className="text-lg font-display font-bold text-foreground">{lead.expiration_year}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Duration</p>
+            <p className="text-lg font-display font-bold text-foreground">{lead.lease_duration}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Relocation</p>
+            <p className="text-lg font-display font-bold text-foreground">{lead.relocation_start}</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Notes</p>
+            <p className="text-lg font-display font-bold text-foreground">{notes.length}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Lead Info */}
-          <Card className="lg:col-span-2 p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-foreground">Lead Informatie</h3>
-              {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={startEditing}>
-                  <Edit className="mr-2 h-3.5 w-3.5" /> Bewerk
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
-                    <X className="mr-1 h-3.5 w-3.5" /> Annuleer
-                  </Button>
-                  <Button size="sm" onClick={handleSaveEdit}>
-                    <Save className="mr-1 h-3.5 w-3.5" /> Opslaan
-                  </Button>
-                </div>
-              )}
-            </div>
-
+          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 sm:p-6">
             {isEditing ? (
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Bedrijfsnaam</Label>
-                  <Input value={editForm.bedrijfsnaam} onChange={e => updateField("bedrijfsnaam", e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Website</Label>
-                  <Input value={editForm.website} onChange={e => updateField("website", e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Kantooradres</Label>
-                  <Input value={editForm.office_address} onChange={e => updateField("office_address", e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Expiratie Jaar</Label>
-                    <Input value={editForm.expiration_year} onChange={e => updateField("expiration_year", e.target.value)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Lease Duur</Label>
-                    <Input value={editForm.lease_duration} onChange={e => updateField("lease_duration", e.target.value)} />
+              <>
+                <div className="flex justify-between items-center mb-5">
+                  <h3 className="font-display font-bold text-foreground tracking-tight">Edit Lead</h3>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setIsEditing(false)}>
+                      <X className="mr-1 h-3.5 w-3.5" /> Cancel
+                    </Button>
+                    <Button size="sm" className="text-xs" onClick={handleSaveEdit}>
+                      <Save className="mr-1 h-3.5 w-3.5" /> Save
+                    </Button>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Verhuizing Start</Label>
-                  <Input value={editForm.relocation_start} onChange={e => updateField("relocation_start", e.target.value)} />
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Bedrijfsnaam</Label>
+                    <Input value={editForm.bedrijfsnaam} onChange={e => updateField("bedrijfsnaam", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Website</Label>
+                    <Input value={editForm.website} onChange={e => updateField("website", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Kantooradres</Label>
+                    <Input value={editForm.office_address} onChange={e => updateField("office_address", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Expiratie Jaar</Label>
+                      <Input value={editForm.expiration_year} onChange={e => updateField("expiration_year", e.target.value)} className="text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Lease Duur</Label>
+                      <Input value={editForm.lease_duration} onChange={e => updateField("lease_duration", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Verhuizing Start</Label>
+                    <Input value={editForm.relocation_start} onChange={e => updateField("relocation_start", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Email</Label>
+                    <Input value={editForm.cfo_email} onChange={e => updateField("cfo_email", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">LinkedIn</Label>
+                    <Input value={editForm.linkedin_page} onChange={e => updateField("linkedin_page", e.target.value)} className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Bedrijfsomschrijving</Label>
+                    <Textarea value={editForm.snippet} onChange={e => updateField("snippet", e.target.value)} rows={4} className="text-sm" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Email</Label>
-                  <Input value={editForm.cfo_email} onChange={e => updateField("cfo_email", e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">LinkedIn</Label>
-                  <Input value={editForm.linkedin_page} onChange={e => updateField("linkedin_page", e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Bedrijfsomschrijving</Label>
-                  <Textarea value={editForm.snippet} onChange={e => updateField("snippet", e.target.value)} rows={4} />
-                </div>
-              </div>
+              </>
             ) : (
               <>
+                <h3 className="font-display font-bold text-foreground tracking-tight mb-5">Details</h3>
                 <div className="space-y-4">
                   <InfoRow icon={<Globe className="h-4 w-4" />} label="Website" value={lead.website} isLink />
                   <InfoRow icon={<MapPin className="h-4 w-4" />} label="Locatie" value={lead.office_address} />
-                  <InfoRow icon={<Calendar className="h-4 w-4" />} label="Lease Expiratie" value={lead.expiration_year} />
-                  <InfoRow icon={<Clock className="h-4 w-4" />} label="Lease Duur" value={lead.lease_duration} />
-                  <InfoRow icon={<Calendar className="h-4 w-4" />} label="Verhuizing" value={lead.relocation_start} />
                   <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={lead.cfo_email} isEmail />
                   <InfoRow icon={<Linkedin className="h-4 w-4" />} label="LinkedIn" value={lead.linkedin_page} isLink />
                   <InfoRow icon={<Clock className="h-4 w-4" />} label="Gevonden op" value={new Date(lead.gevonden_op).toLocaleDateString("nl-NL")} />
                 </div>
 
                 {lead.snippet && (
-                  <>
-                    <Separator className="my-4" />
-                    <div>
-                      <h4 className="font-semibold text-sm text-foreground mb-2">Bedrijfsomschrijving</h4>
-                      <p className={`text-sm text-muted-foreground ${!showFullSnippet ? "line-clamp-4" : ""}`}>
-                        {lead.snippet}
-                      </p>
-                      {lead.snippet.length > 150 && (
-                        <Button variant="ghost" size="sm" className="mt-1 p-0 h-auto text-xs" onClick={() => setShowFullSnippet(!showFullSnippet)}>
-                          {showFullSnippet ? "Minder tonen" : "Meer tonen"}
-                        </Button>
-                      )}
-                    </div>
-                  </>
+                  <div className="mt-5 pt-5 border-t border-border">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Omschrijving</h4>
+                    <p className={`text-sm text-muted-foreground leading-relaxed ${!showFullSnippet ? "line-clamp-4" : ""}`}>
+                      {lead.snippet}
+                    </p>
+                    {lead.snippet.length > 150 && (
+                      <button
+                        className="text-xs text-foreground font-medium mt-1.5 hover:underline"
+                        onClick={() => setShowFullSnippet(!showFullSnippet)}
+                      >
+                        {showFullSnippet ? "Less" : "More"}
+                      </button>
+                    )}
+                  </div>
                 )}
 
-                <div className="flex gap-2 mt-6">
+                <div className="flex gap-2 mt-5 pt-5 border-t border-border">
                   {lead.website && (
-                    <Button variant="outline" className="flex-1" asChild>
-                      <a href={lead.website} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" /> Website
-                      </a>
-                    </Button>
+                    <a
+                      href={lead.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-md border border-border hover:bg-muted transition-colors"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" /> Website
+                    </a>
                   )}
                   {lead.linkedin_page && (
-                    <Button variant="outline" className="flex-1" asChild>
-                      <a href={lead.linkedin_page} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="mr-2 h-4 w-4" /> LinkedIn
-                      </a>
-                    </Button>
+                    <a
+                      href={lead.linkedin_page}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 text-xs font-medium py-2 rounded-md border border-border hover:bg-muted transition-colors"
+                    >
+                      <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                    </a>
                   )}
                 </div>
               </>
             )}
-          </Card>
+          </div>
 
           {/* Right: Notes */}
-          <Card className="lg:col-span-3 p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-foreground">
-                Notities ({notes.length})
+          <div className="lg:col-span-3 bg-card border border-border rounded-xl p-5 sm:p-6">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="font-display font-bold text-foreground tracking-tight">
+                Notes <span className="text-muted-foreground font-normal text-sm">({notes.length})</span>
               </h3>
-              <Button size="sm" onClick={() => setShowNoteForm(true)}>
-                <Plus className="mr-2 h-4 w-4" /> Nieuwe notitie
+              <Button size="sm" className="text-xs gap-1.5" onClick={() => setShowNoteForm(true)}>
+                <Plus className="h-3.5 w-3.5" /> Add Note
               </Button>
             </div>
 
             {showNoteForm && (
-              <Card className="p-4 mb-4 bg-primary/5 border-primary/20">
+              <div className="p-4 mb-4 bg-muted/50 border border-border rounded-lg">
                 <Textarea
-                  placeholder="Typ hier je notitie..."
+                  placeholder="Write your note..."
                   value={newNoteText}
                   onChange={(e) => setNewNoteText(e.target.value)}
-                  rows={4}
-                  className="mb-3"
+                  rows={3}
+                  className="mb-3 text-sm bg-card"
                 />
                 <div className="flex gap-2 items-center flex-wrap">
                   <Select value={newNoteType} onValueChange={setNewNoteType}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Type notitie" />
+                    <SelectTrigger className="w-[160px] h-8 text-xs">
+                      <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="general">Algemeen</SelectItem>
-                      <SelectItem value="contact_attempt">Contact poging</SelectItem>
+                      <SelectItem value="contact_attempt">Contact</SelectItem>
                       <SelectItem value="meeting">Meeting</SelectItem>
                       <SelectItem value="follow_up">Follow-up</SelectItem>
-                      <SelectItem value="proposal">Voorstel verstuurd</SelectItem>
+                      <SelectItem value="proposal">Voorstel</SelectItem>
                     </SelectContent>
                   </Select>
                   <div className="flex gap-2 ml-auto">
-                    <Button variant="outline" size="sm" onClick={() => setShowNoteForm(false)}>Annuleer</Button>
-                    <Button size="sm" onClick={handleSaveNote}>
-                      <Save className="mr-2 h-4 w-4" /> Opslaan
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowNoteForm(false)}>Cancel</Button>
+                    <Button size="sm" className="text-xs" onClick={handleSaveNote}>
+                      <Save className="mr-1.5 h-3.5 w-3.5" /> Save
                     </Button>
                   </div>
                 </div>
-              </Card>
+              </div>
             )}
 
             <div className="space-y-3 max-h-[600px] overflow-y-auto">
               {notes.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
-                  <MessageSquare className="mx-auto h-12 w-12 mb-3 opacity-30" />
-                  <p>Nog geen notities toegevoegd</p>
+                  <MessageSquare className="mx-auto h-10 w-10 mb-3 opacity-20" />
+                  <p className="text-sm">No notes yet</p>
                 </div>
               )}
               {notes.map(note => (
-                <Card key={note.id} className={`p-4 ${note.is_pinned ? "border-primary border-2" : ""}`}>
+                <div
+                  key={note.id}
+                  className={`p-4 rounded-lg border transition-colors ${
+                    note.is_pinned ? "border-foreground/20 bg-muted/30" : "border-border"
+                  }`}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <Badge className={noteTypeColors[note.note_type] || noteTypeColors.general}>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted px-2 py-0.5 rounded">
                         {noteTypeLabels[note.note_type] || "Algemeen"}
-                      </Badge>
-                      {note.is_pinned && <Pin className="h-3.5 w-3.5 text-primary" />}
+                      </span>
+                      {note.is_pinned && <Pin className="h-3 w-3 text-foreground" />}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreVertical className="h-3.5 w-3.5" />
-                        </Button>
+                        <button className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted transition-colors">
+                          <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => togglePin(note.id)}>
@@ -337,11 +369,11 @@ export default function LeadDetail() {
                           {note.is_pinned ? "Unpin" : "Pin"}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { setEditingNoteId(note.id); setEditNoteText(note.note_text); }}>
-                          <Edit className="mr-2 h-4 w-4" /> Bewerk
+                          <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDeleteNote(note.id)} className="text-destructive">
-                          <Trash2 className="mr-2 h-4 w-4" /> Verwijder
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -349,25 +381,25 @@ export default function LeadDetail() {
 
                   {editingNoteId === note.id ? (
                     <div className="space-y-2">
-                      <Textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={3} />
+                      <Textarea value={editNoteText} onChange={e => setEditNoteText(e.target.value)} rows={3} className="text-sm" />
                       <div className="flex gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={() => setEditingNoteId(null)}>Annuleer</Button>
-                        <Button size="sm" onClick={() => handleUpdateNote(note.id)}>Opslaan</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setEditingNoteId(null)}>Cancel</Button>
+                        <Button size="sm" className="text-xs" onClick={() => handleUpdateNote(note.id)}>Save</Button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-foreground/80 whitespace-pre-wrap mb-3">{note.note_text}</p>
+                    <p className="text-sm text-foreground/80 whitespace-pre-wrap mb-3 leading-relaxed">{note.note_text}</p>
                   )}
 
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelativeTime(note.created_at)}</span>
                     {note.created_by && <span className="flex items-center gap-1"><User className="h-3 w-3" />{note.created_by}</span>}
-                    {note.created_at !== note.updated_at && <span className="italic">(bewerkt)</span>}
+                    {note.created_at !== note.updated_at && <span className="italic">(edited)</span>}
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Status Timeline */}
@@ -383,11 +415,11 @@ function InfoRow({ icon, label, value, isLink, isEmail }: { icon: React.ReactNod
     <div className="flex items-start gap-3">
       <div className="text-muted-foreground mt-0.5 shrink-0">{icon}</div>
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">{label}</p>
         {isLink ? (
-          <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate block">{value}</a>
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline truncate block">{value}</a>
         ) : isEmail ? (
-          <a href={`mailto:${value}`} className="text-sm text-primary hover:underline">{value}</a>
+          <a href={`mailto:${value}`} className="text-sm text-foreground hover:underline">{value}</a>
         ) : (
           <p className="text-sm text-foreground">{value}</p>
         )}
