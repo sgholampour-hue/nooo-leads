@@ -72,7 +72,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Leads */}
           <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
             <div>
@@ -109,7 +109,18 @@ export default function Dashboard() {
             <p className="text-muted-foreground text-[10px]">{withEmail} verified contacts</p>
           </div>
 
-          {/* Pipeline - removed as requested */}
+          {/* Pipeline */}
+          <div className="bg-[hsl(45,100%,97%)] border border-[hsl(45,80%,75%)] rounded-xl p-5 flex flex-col justify-between h-32 hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[hsl(38,60%,40%)] text-xs font-semibold uppercase tracking-wide">Pipeline</p>
+              </div>
+              <h3 className="text-3xl font-display font-bold text-foreground tracking-tight">{pipelineValue}</h3>
+            </div>
+            <div className="w-full bg-[hsl(45,60%,85%)] rounded-full h-1 mt-auto">
+              <div className="bg-[hsl(38,92%,50%)] h-1 rounded-full" style={{ width: `${verifiedPct}%` }} />
+            </div>
+          </div>
         </div>
 
         {/* Chart + Activity */}
