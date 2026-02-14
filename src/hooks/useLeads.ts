@@ -128,7 +128,7 @@ export function useLeads() {
     if (Object.keys(sanitized).length === 0) return;
     const { error } = await supabase.from("leads").update(sanitized).eq("id", id);
     if (error) console.error("Error updating lead:", error);
-    else await fetchLeads();
+    else { await fetchLeads(); await fetchStatusHistory(); }
   };
 
   const deleteLead = async (id: string) => {
@@ -190,6 +190,6 @@ export function useLeads() {
     setNotes: setNotesWithSync,
     setStatusHistory: setStatusHistoryWithSync,
     loading,
-    refreshLeads: fetchLeads,
+    refreshLeads: async () => { await fetchLeads(); await fetchStatusHistory(); },
   };
 }

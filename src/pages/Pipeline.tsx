@@ -3,7 +3,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { PageTransition } from "@/components/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, GripVertical, Building2 } from "lucide-react";
+import { MessageSquare, GripVertical, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
@@ -33,6 +34,21 @@ export default function Pipeline() {
   const navigate = useNavigate();
   const [draggedLead, setDraggedLead] = useState<string | null>(null);
   const [dragOverPhase, setDragOverPhase] = useState<PhaseKey | null>(null);
+  const [urgencyFilter, setUrgencyFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+
+  // Get unique expiration years for filter
+  const activeLeads = allLeads.filter(l => !l.is_archived);
+  const years = [...new Set(activeLeads.map(l => l.expiration_year).filter(y => y && y !== "Unknown" && y !== ""))].sort();
+
+  // Apply filters
+  const filteredLeads = activeLeads.filter(lead => {
+    if (urgencyFilter === "high" && lead.urgency_score < 90) return false;
+    if (urgencyFilter === "medium" && (lead.urgency_score < 50 || lead.urgency_score >= 90)) return false;
+    if (urgencyFilter === "low" && lead.urgency_score >= 50) return false;
+    if (yearFilter !== "all" && lead.expiration_year !== yearFilter) return false;
+    return true;
+  });
 
   // Group non-archived leads by pipeline phase
   const grouped: Record<PhaseKey, LeadWithStats[]> = {
@@ -42,9 +58,7 @@ export default function Pipeline() {
     afgesloten: [],
   };
 
-  allLeads
-    .filter(l => !l.is_archived)
-    .forEach(lead => {
+  filteredLeads.forEach(lead => {
       const phase = getPhaseForStatus(lead.current_status);
       grouped[phase].push(lead);
     });
@@ -109,13 +123,40 @@ export default function Pipeline() {
   return (
     <AppLayout>
       <PageTransition className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
-            Pijplijn
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Sleep leads tussen fasen om de voortgang bij te houden
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
+              Pijplijn
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Sleep leads tussen fasen om de voortgang bij te houden
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+              <SelectTrigger className="h-8 w-[140px] text-xs">
+                <SelectValue placeholder="Urgentie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle urgentie</SelectItem>
+                <SelectItem value="high">Hoog (90+)</SelectItem>
+                <SelectItem value="medium">Medium (50-89)</SelectItem>
+                <SelectItem value="low">Laag (&lt;50)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="h-8 w-[130px] text-xs">
+                <SelectValue placeholder="Jaar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle jaren</SelectItem>
+                {years.map(y => (
+                  <SelectItem key={y} value={y!}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Phase summary */}
