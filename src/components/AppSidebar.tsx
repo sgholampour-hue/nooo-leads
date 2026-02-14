@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutGrid, Users, Bell, Archive, Plus, Menu, X, User, Settings } from "lucide-react";
+import { LayoutGrid, Users, Bell, Archive, Plus, Menu, X, User, Settings, Kanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/", icon: LayoutGrid, label: "Overzicht" },
   { to: "/leads", icon: Users, label: "Leads Database" },
   { to: "/leads/urgent", icon: Bell, label: "Prioriteit", showBadge: true },
+  { to: "/pipeline", icon: Kanban, label: "Pijplijn" },
   { to: "/leads/archive", icon: Archive, label: "Archief" },
 ];
 

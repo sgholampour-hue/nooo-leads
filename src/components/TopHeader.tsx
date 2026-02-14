@@ -8,6 +8,7 @@ const routeLabels: Record<string, string> = {
   "/leads": "Database",
   "/leads/urgent": "Prioriteit",
   "/leads/new": "Nieuwe Lead",
+  "/pipeline": "Pijplijn",
   "/archive": "Archief",
 };
 
