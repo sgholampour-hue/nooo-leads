@@ -3,7 +3,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { PageTransition } from "@/components/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, GripVertical, Filter } from "lucide-react";
+import { MessageSquare, GripVertical, Filter, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -36,6 +37,7 @@ export default function Pipeline() {
   const [dragOverPhase, setDragOverPhase] = useState<PhaseKey | null>(null);
   const [urgencyFilter, setUrgencyFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Get unique expiration years for filter
   const activeLeads = allLeads.filter(l => !l.is_archived);
@@ -47,6 +49,8 @@ export default function Pipeline() {
     if (urgencyFilter === "medium" && (lead.urgency_score < 50 || lead.urgency_score >= 90)) return false;
     if (urgencyFilter === "low" && lead.urgency_score >= 50) return false;
     if (yearFilter !== "all" && lead.expiration_year !== yearFilter) return false;
+    if (searchQuery && !lead.bedrijfsnaam.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(lead.office_address && lead.office_address.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
     return true;
   });
 
@@ -132,7 +136,16 @@ export default function Pipeline() {
               Sleep leads tussen fasen om de voortgang bij te houden
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Zoek lead..."
+                className="h-8 w-[180px] text-xs pl-8"
+              />
+            </div>
             <Filter className="h-3.5 w-3.5 text-muted-foreground" />
             <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
               <SelectTrigger className="h-8 w-[140px] text-xs">
@@ -173,11 +186,11 @@ export default function Pipeline() {
 
         {/* Kanban board */}
         <LayoutGroup>
-        <div className="grid grid-cols-4 gap-4 min-h-[60vh]">
+        <div className="flex gap-4 min-h-[60vh] overflow-x-auto pb-4 snap-x snap-mandatory lg:grid lg:grid-cols-4 lg:overflow-x-visible lg:snap-none lg:pb-0">
           {PHASES.map(phase => (
             <div
               key={phase.key}
-              className={`flex flex-col rounded-xl border transition-colors ${
+              className={`flex flex-col rounded-xl border transition-colors min-w-[280px] snap-center lg:min-w-0 ${
                 dragOverPhase === phase.key
                   ? "border-foreground/30 bg-accent/50"
                   : "border-border bg-muted/30"
