@@ -1,0 +1,220 @@
+import { useLeadsContext } from "@/contexts/LeadsContext";
+import { AppLayout } from "@/components/AppLayout";
+import { PageTransition } from "@/components/PageTransition";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, GripVertical, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { LeadWithStats } from "@/types/leads";
+
+/** Pipeline phases in order */
+const PHASES = [
+  { key: "lead", label: "Lead", color: "bg-muted text-muted-foreground" },
+  { key: "contact_opgenomen", label: "Contact opgenomen", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+  { key: "in_gesprek", label: "In gesprek", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  { key: "afgesloten", label: "Afgesloten", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+] as const;
+
+type PhaseKey = typeof PHASES[number]["key"];
+
+function getPhaseForStatus(status: string): PhaseKey {
+  if (["contact_opgenomen", "contacted"].includes(status)) return "contact_opgenomen";
+  if (["in_gesprek", "in_progress", "meeting", "proposal"].includes(status)) return "in_gesprek";
+  if (["afgesloten", "closed", "won", "lost"].includes(status)) return "afgesloten";
+  return "lead";
+}
+
+export default function Pipeline() {
+  const { allLeads, statusHistory, refreshLeads } = useLeadsContext();
+  const navigate = useNavigate();
+  const [draggedLead, setDraggedLead] = useState<string | null>(null);
+  const [dragOverPhase, setDragOverPhase] = useState<PhaseKey | null>(null);
+
+  // Group non-archived leads by pipeline phase
+  const grouped: Record<PhaseKey, LeadWithStats[]> = {
+    lead: [],
+    contact_opgenomen: [],
+    in_gesprek: [],
+    afgesloten: [],
+  };
+
+  allLeads
+    .filter(l => !l.is_archived)
+    .forEach(lead => {
+      const phase = getPhaseForStatus(lead.current_status);
+      grouped[phase].push(lead);
+    });
+
+  // Sort each column by urgency descending
+  for (const key of Object.keys(grouped) as PhaseKey[]) {
+    grouped[key].sort((a, b) => b.urgency_score - a.urgency_score);
+  }
+
+  const moveToPhase = useCallback(async (leadId: string, newPhase: PhaseKey) => {
+    const { error } = await supabase.from("lead_status_history").insert({
+      lead_id: leadId,
+      status: newPhase,
+      changed_by: "Gebruiker",
+      notes: `Verplaatst naar ${PHASES.find(p => p.key === newPhase)?.label}`,
+    });
+    if (error) {
+      console.error("Error updating pipeline phase:", error);
+      toast.error("Kon fase niet bijwerken");
+      return;
+    }
+    toast.success(`Verplaatst naar ${PHASES.find(p => p.key === newPhase)?.label}`);
+    await refreshLeads();
+  }, [refreshLeads]);
+
+  const handleDragStart = (leadId: string) => {
+    setDraggedLead(leadId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, phase: PhaseKey) => {
+    e.preventDefault();
+    setDragOverPhase(phase);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverPhase(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetPhase: PhaseKey) => {
+    e.preventDefault();
+    setDragOverPhase(null);
+    if (!draggedLead) return;
+
+    const lead = allLeads.find(l => l.id === draggedLead);
+    if (!lead) return;
+
+    const currentPhase = getPhaseForStatus(lead.current_status);
+    if (currentPhase === targetPhase) {
+      setDraggedLead(null);
+      return;
+    }
+
+    await moveToPhase(draggedLead, targetPhase);
+    setDraggedLead(null);
+  };
+
+  return (
+    <AppLayout>
+      <PageTransition className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
+            Pijplijn
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Sleep leads tussen fasen om de voortgang bij te houden
+          </p>
+        </div>
+
+        {/* Phase summary */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {PHASES.map(phase => (
+            <div key={phase.key} className="flex items-center gap-2">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${phase.color}`}>
+                {grouped[phase.key].length}
+              </span>
+              <span className="text-xs font-medium text-foreground">{phase.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Kanban board */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 min-h-[60vh]">
+          {PHASES.map(phase => (
+            <div
+              key={phase.key}
+              className={`flex flex-col rounded-xl border transition-colors ${
+                dragOverPhase === phase.key
+                  ? "border-foreground/30 bg-accent/50"
+                  : "border-border bg-muted/30"
+              }`}
+              onDragOver={e => handleDragOver(e, phase.key)}
+              onDragLeave={handleDragLeave}
+              onDrop={e => handleDrop(e, phase.key)}
+            >
+              {/* Column header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${phase.color.split(" ")[0]}`} />
+                  <span className="text-xs font-semibold text-foreground">{phase.label}</span>
+                </div>
+                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                  {grouped[phase.key].length}
+                </span>
+              </div>
+
+              {/* Cards */}
+              <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[65vh]">
+                {grouped[phase.key].length === 0 && (
+                  <p className="text-center text-[10px] text-muted-foreground py-8">
+                    Geen leads
+                  </p>
+                )}
+                {grouped[phase.key].map((lead, i) => (
+                  <motion.div
+                    key={lead.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                  >
+                    <Card
+                      draggable
+                      onDragStart={() => handleDragStart(lead.id)}
+                      onDragEnd={() => setDraggedLead(null)}
+                      className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group ${
+                        draggedLead === lead.id ? "opacity-40 scale-95" : ""
+                      }`}
+                      onClick={() => navigate(`/leads/${lead.id}`)}
+                    >
+                      <div className="flex items-start gap-2">
+                        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {lead.bedrijfsnaam}
+                          </p>
+                          {lead.office_address && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                              {lead.office_address}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            {lead.urgency_score > 0 && (
+                              <span className={`text-[10px] font-bold tabular-nums ${
+                                lead.urgency_score >= 90 ? "text-destructive" :
+                                lead.urgency_score >= 50 ? "text-warning" : "text-muted-foreground"
+                              }`}>
+                                {lead.urgency_score}
+                              </span>
+                            )}
+                            {lead.expiration_year && lead.expiration_year !== "Unknown" && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4">
+                                {lead.expiration_year}
+                              </Badge>
+                            )}
+                            {lead.note_count > 0 && (
+                              <span className="ml-auto flex items-center gap-0.5 text-muted-foreground">
+                                <MessageSquare className="h-3 w-3" />
+                                <span className="text-[10px]">{lead.note_count}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </PageTransition>
+    </AppLayout>
+  );
+}
