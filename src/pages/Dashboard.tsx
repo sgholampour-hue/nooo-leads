@@ -1,14 +1,14 @@
 import { useLeadsContext } from "@/contexts/LeadsContext";
 import { AppLayout } from "@/components/AppLayout";
 import { useNavigate } from "react-router-dom";
-import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal, RefreshCw } from "lucide-react";
+import { FileEdit, CheckCircle, AlertTriangle, MoreHorizontal, RefreshCw, ArrowRight } from "lucide-react";
 import { PageTransition, StaggerContainer, StaggerItem, HoverCard } from "@/components/PageTransition";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function Dashboard() {
-  const { allLeads, notes, refreshLeads } = useLeadsContext();
+  const { allLeads, notes, statusHistory, refreshLeads } = useLeadsContext();
   const navigate = useNavigate();
   const [syncing, setSyncing] = useState(false);
 
@@ -147,6 +147,9 @@ export default function Dashboard() {
           </StaggerItem>
         </StaggerContainer>
 
+        {/* Pipeline Overview */}
+        <PipelineSummary allLeads={allLeads} statusHistory={statusHistory} navigate={navigate} />
+
         {/* Chart + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Lease Expirations Chart */}
@@ -236,5 +239,67 @@ export default function Dashboard() {
         </div>
       </PageTransition>
     </AppLayout>
+  );
+}
+
+const PHASES = [
+  { key: "lead", label: "Lead", color: "bg-muted" },
+  { key: "contact_opgenomen", label: "Contact opgenomen", color: "bg-blue-500" },
+  { key: "in_gesprek", label: "In gesprek", color: "bg-amber-500" },
+  { key: "afgesloten", label: "Afgesloten", color: "bg-emerald-500" },
+] as const;
+
+function getPhaseForStatus(status: string): string {
+  if (["contact_opgenomen", "contacted"].includes(status)) return "contact_opgenomen";
+  if (["in_gesprek", "in_progress", "meeting", "proposal"].includes(status)) return "in_gesprek";
+  if (["afgesloten", "closed", "won", "lost"].includes(status)) return "afgesloten";
+  return "lead";
+}
+
+function PipelineSummary({ allLeads, statusHistory, navigate }: { allLeads: any[]; statusHistory: any[]; navigate: any }) {
+  const activeLeads = allLeads.filter(l => !l.is_archived);
+  const counts: Record<string, number> = { lead: 0, contact_opgenomen: 0, in_gesprek: 0, afgesloten: 0 };
+
+  activeLeads.forEach(lead => {
+    const lastStatus = statusHistory
+      .filter((s: any) => s.lead_id === lead.id)
+      .sort((a: any, b: any) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())[0];
+    const phase = getPhaseForStatus(lastStatus?.status || lead.current_status || "new");
+    counts[phase] = (counts[phase] || 0) + 1;
+  });
+
+  const total = activeLeads.length || 1;
+
+  return (
+    <div
+      className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate("/pipeline")}
+    >
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h3 className="font-display font-bold text-foreground tracking-tight">Pijplijn</h3>
+          <p className="text-muted-foreground text-xs">{activeLeads.length} actieve leads</p>
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+      </div>
+      {/* Progress bar */}
+      <div className="flex rounded-full h-2.5 overflow-hidden mb-4">
+        {PHASES.map(phase => (
+          <div
+            key={phase.key}
+            className={`${phase.color} transition-all`}
+            style={{ width: `${(counts[phase.key] / total) * 100}%` }}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {PHASES.map(phase => (
+          <div key={phase.key} className="text-center">
+            <p className="text-lg font-display font-bold text-foreground">{counts[phase.key]}</p>
+            <p className="text-[10px] text-muted-foreground font-medium">{phase.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

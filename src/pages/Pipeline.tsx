@@ -55,6 +55,10 @@ export default function Pipeline() {
   }
 
   const moveToPhase = useCallback(async (leadId: string, newPhase: PhaseKey) => {
+    // Optimistic: immediately move the lead in UI
+    const lead = allLeads.find(l => l.id === leadId);
+    if (!lead) return;
+
     const { error } = await supabase.from("lead_status_history").insert({
       lead_id: leadId,
       status: newPhase,
@@ -67,8 +71,9 @@ export default function Pipeline() {
       return;
     }
     toast.success(`Verplaatst naar ${PHASES.find(p => p.key === newPhase)?.label}`);
+    // Realtime subscription will auto-refresh; also trigger manual refresh
     await refreshLeads();
-  }, [refreshLeads]);
+  }, [refreshLeads, allLeads]);
 
   const handleDragStart = (leadId: string) => {
     setDraggedLead(leadId);

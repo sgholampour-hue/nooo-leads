@@ -14,8 +14,9 @@ import {
 import {
   ArrowLeft, ExternalLink, Edit, Save, Plus, Pin, Trash2,
   MoreVertical, MessageSquare, Clock, User, Globe, MapPin,
-  Calendar, Mail, Linkedin, X, Archive
+  Calendar, Mail, Linkedin, X, Archive, GitBranch
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { toast } from "sonner";
@@ -37,11 +38,18 @@ function getScoreColor(score: number) {
   return "text-muted-foreground";
 }
 
+function getPhaseForStatus(status: string): string {
+  if (["contact_opgenomen", "contacted"].includes(status)) return "contact_opgenomen";
+  if (["in_gesprek", "in_progress", "meeting", "proposal"].includes(status)) return "in_gesprek";
+  if (["afgesloten", "closed", "won", "lost"].includes(status)) return "afgesloten";
+  return "lead";
+}
+
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead, archiveLead, unarchiveLead } = useLeadsContext();
-  const { archivedLeads } = useLeadsContext();
+  const { archivedLeads, refreshLeads } = useLeadsContext();
   const lead = allLeads.find(l => l.id === id) || archivedLeads.find(l => l.id === id);
 
   const { notes, addNote, updateNote, deleteNote, togglePin } = useNotes(allNotes, setAllNotes, id || "");
@@ -195,8 +203,45 @@ export default function LeadDetail() {
           </div>
         </div>
 
-        {/* Quick Stats Row */}
-        <StaggerContainer className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Phase Selector + Quick Stats */}
+        <StaggerContainer className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <StaggerItem>
+            <HoverCard className="bg-card border border-border rounded-xl p-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1 flex items-center gap-1">
+                <GitBranch className="h-3 w-3" /> Fase
+              </p>
+              <Select
+                value={getPhaseForStatus(lead.current_status)}
+                onValueChange={async (newPhase) => {
+                  const currentPhase = getPhaseForStatus(lead.current_status);
+                  if (currentPhase === newPhase) return;
+                  const phaseLabels: Record<string, string> = {
+                    lead: "Lead", contact_opgenomen: "Contact opgenomen",
+                    in_gesprek: "In gesprek", afgesloten: "Afgesloten",
+                  };
+                  const { error } = await supabase.from("lead_status_history").insert({
+                    lead_id: lead.id,
+                    status: newPhase,
+                    changed_by: "Gebruiker",
+                    notes: `Verplaatst naar ${phaseLabels[newPhase]}`,
+                  });
+                  if (error) { toast.error("Kon fase niet bijwerken"); return; }
+                  toast.success(`Verplaatst naar ${phaseLabels[newPhase]}`);
+                  refreshLeads();
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs mt-0.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lead">Lead</SelectItem>
+                  <SelectItem value="contact_opgenomen">Contact opgenomen</SelectItem>
+                  <SelectItem value="in_gesprek">In gesprek</SelectItem>
+                  <SelectItem value="afgesloten">Afgesloten</SelectItem>
+                </SelectContent>
+              </Select>
+            </HoverCard>
+          </StaggerItem>
           <StaggerItem>
             <HoverCard className="bg-card border border-border rounded-xl p-4">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">Lease Expiratie</p>
