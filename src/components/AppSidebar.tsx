@@ -10,7 +10,7 @@ const navItems = [
   { to: "/", icon: LayoutGrid, label: "Overzicht" },
   { to: "/leads", icon: Users, label: "Leads Database" },
   { to: "/leads/urgent", icon: Bell, label: "Prioriteit", showBadge: true },
-  { to: "/pipeline", icon: Kanban, label: "Pijplijn" },
+  { to: "/pipeline", icon: Kanban, label: "Pijplijn", showPipelineBadge: true },
   { to: "/leads/archive", icon: Archive, label: "Archief" },
 ];
 
@@ -19,6 +19,7 @@ export function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { allLeads } = useLeadsContext();
   const urgentCount = allLeads.filter(l => l.urgency_score >= 90).length;
+  const activePipelineCount = allLeads.filter(l => !l.is_archived).length;
 
   const sidebarContent = (
     <>
@@ -55,6 +56,11 @@ export function AppSidebar() {
               {item.showBadge && urgentCount > 0 && (
                 <span className="ml-auto bg-muted text-muted-foreground text-[10px] py-0.5 px-2 rounded-full font-semibold border border-border">
                   {urgentCount}
+                </span>
+              )}
+              {item.showPipelineBadge && activePipelineCount > 0 && (
+                <span className="ml-auto bg-muted text-muted-foreground text-[10px] py-0.5 px-2 rounded-full font-semibold border border-border">
+                  {activePipelineCount}
                 </span>
               )}
             </NavLink>
