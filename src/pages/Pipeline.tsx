@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, GripVertical, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -172,6 +172,7 @@ export default function Pipeline() {
         </div>
 
         {/* Kanban board */}
+        <LayoutGroup>
         <div className="grid grid-cols-4 gap-4 min-h-[60vh]">
           {PHASES.map(phase => (
             <div
@@ -203,12 +204,15 @@ export default function Pipeline() {
                     Geen leads
                   </p>
                 )}
+                <AnimatePresence mode="popLayout">
                 {grouped[phase.key].map((lead, i) => (
                   <motion.div
                     key={lead.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
                   >
                     <Card
                       draggable
@@ -261,10 +265,12 @@ export default function Pipeline() {
                     </Card>
                   </motion.div>
                 ))}
+                </AnimatePresence>
               </div>
             </div>
           ))}
         </div>
+        </LayoutGroup>
       </PageTransition>
     </AppLayout>
   );
