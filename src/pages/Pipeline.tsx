@@ -172,7 +172,7 @@ export default function Pipeline() {
         </div>
 
         {/* Kanban board */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 min-h-[60vh]">
+        <div className="grid grid-cols-4 gap-4 min-h-[60vh]">
           {PHASES.map(phase => (
             <div
               key={phase.key}
@@ -214,8 +214,12 @@ export default function Pipeline() {
                       draggable
                       onDragStart={() => handleDragStart(lead.id)}
                       onDragEnd={() => setDraggedLead(null)}
-                      className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group ${
+                     className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all group ${
                         draggedLead === lead.id ? "opacity-40 scale-95" : ""
+                      } ${
+                        lead.urgency_score >= 90 ? "border-l-2 border-l-destructive" :
+                        lead.urgency_score >= 70 ? "border-l-2 border-l-warning" :
+                        lead.urgency_score >= 50 ? "border-l-2 border-l-primary" : ""
                       }`}
                       onClick={() => navigate(`/leads/${lead.id}`)}
                     >
@@ -230,11 +234,12 @@ export default function Pipeline() {
                               {lead.office_address}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2">
                             {lead.urgency_score > 0 && (
-                              <span className={`text-[10px] font-bold tabular-nums ${
-                                lead.urgency_score >= 90 ? "text-destructive" :
-                                lead.urgency_score >= 50 ? "text-warning" : "text-muted-foreground"
+                              <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded ${
+                                lead.urgency_score >= 90 ? "bg-destructive/15 text-destructive" :
+                                lead.urgency_score >= 70 ? "bg-warning/15 text-warning" :
+                                lead.urgency_score >= 50 ? "bg-primary/15 text-primary" : "text-muted-foreground"
                               }`}>
                                 {lead.urgency_score}
                               </span>
