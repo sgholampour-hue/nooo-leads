@@ -20,7 +20,7 @@ export function useLeads() {
       .eq("is_archived", false)
       .order("created_at", { ascending: false });
     if (error) console.error("Error fetching leads:", error);
-    else setLeads((data || []) as Lead[]);
+    else setLeads((data || []) as unknown as Lead[]);
   }, []);
 
   const fetchArchivedLeads = useCallback(async () => {
@@ -30,7 +30,7 @@ export function useLeads() {
       .eq("is_archived", true)
       .order("updated_at", { ascending: false });
     if (error) console.error("Error fetching archived leads:", error);
-    else setArchivedLeads((data || []) as Lead[]);
+    else setArchivedLeads((data || []) as unknown as Lead[]);
   }, []);
 
   const fetchNotes = useCallback(async () => {
@@ -119,7 +119,7 @@ export function useLeads() {
     const { data, error } = await supabase.from("leads").insert(insertData).select().single();
     if (error) { console.error("Error adding lead:", error); return null; }
     await fetchLeads();
-    return data as Lead;
+    return data as unknown as Lead;
   };
 
   // OWASP: Sanitize partial updates to only allow known fields
