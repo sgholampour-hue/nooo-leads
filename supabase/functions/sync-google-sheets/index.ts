@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
       "kvk_number", "bedrijfsnaam", "website", "office_address",
       "relocation_start", "expiration_year", "lease_duration",
       "linkedin_page", "cfo_email", "snippet", "gevonden_op",
-      "sheet_row_index", "is_archived",
+      "sheet_row_index", "is_archived", "ai_score", "ai_reden",
     ];
 
     const leadsToUpsert = dataRows.map((row, idx) => {
@@ -184,6 +184,9 @@ Deno.serve(async (req) => {
       const cfo_email = get("cfo_email");
       const expiration_year = get("expiration_year");
 
+      const aiScoreRaw = get("ai_score");
+      const aiScore = aiScoreRaw ? parseInt(aiScoreRaw, 10) : null;
+
       return {
         kvk_number: isNaN(kvkNum as number) || (kvkNum as number) > 99999999 || (kvkNum as number) < 0 ? null : kvkNum,
         bedrijfsnaam: bedrijfsnaam.substring(0, 200),
@@ -198,6 +201,8 @@ Deno.serve(async (req) => {
         gevonden_op: get("gevonden_op") || new Date().toISOString(),
         sheet_row_index: idx + 2,
         is_archived: false,
+        ai_score: !isNaN(aiScore as number) && (aiScore as number) >= 1 && (aiScore as number) <= 10 ? aiScore : null,
+        ai_reden: get("ai_reden").substring(0, 1000) || null,
       };
     });
 

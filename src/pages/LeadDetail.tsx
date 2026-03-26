@@ -269,6 +269,15 @@ export default function LeadDetail() {
               <p className="text-lg font-display font-bold text-foreground">{notes.length}</p>
             </HoverCard>
           </StaggerItem>
+          {lead.ai_score != null && (
+            <StaggerItem>
+              <HoverCard className="bg-card border border-border rounded-xl p-4 col-span-2 sm:col-span-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-1">AI Score</p>
+                <p className="text-lg font-display font-bold text-foreground">{lead.ai_score}/10</p>
+                {lead.ai_reden && <p className="text-[10px] text-muted-foreground mt-1 leading-snug">{lead.ai_reden}</p>}
+              </HoverCard>
+            </StaggerItem>
+          )}
         </StaggerContainer>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

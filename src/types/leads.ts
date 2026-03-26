@@ -14,6 +14,8 @@ export interface Lead {
   is_archived: boolean;
   created_at: string;
   updated_at: string;
+  ai_score: number | null;
+  ai_reden: string | null;
 }
 
 export interface LeadWithStats extends Lead {
