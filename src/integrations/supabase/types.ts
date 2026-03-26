@@ -92,8 +92,6 @@ export type Database = {
       }
       leads: {
         Row: {
-          ai_reden: string | null
-          ai_score: number | null
           bedrijfsnaam: string
           cfo_email: string | null
           created_at: string
@@ -112,8 +110,6 @@ export type Database = {
           website: string | null
         }
         Insert: {
-          ai_reden?: string | null
-          ai_score?: number | null
           bedrijfsnaam: string
           cfo_email?: string | null
           created_at?: string
@@ -132,8 +128,6 @@ export type Database = {
           website?: string | null
         }
         Update: {
-          ai_reden?: string | null
-          ai_score?: number | null
           bedrijfsnaam?: string
           cfo_email?: string | null
           created_at?: string
