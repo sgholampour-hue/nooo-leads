@@ -191,5 +191,6 @@ export function useLeads() {
     setStatusHistory: setStatusHistoryWithSync,
     loading,
     refreshLeads: async () => { await fetchLeads(); await fetchStatusHistory(); },
+    refreshNotes: fetchNotes,
   };
 }

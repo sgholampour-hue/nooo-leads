@@ -48,7 +48,7 @@ function getPhaseForStatus(status: string): string {
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead, archiveLead, unarchiveLead } = useLeadsContext();
+  const { allLeads, notes: allNotes, setNotes: setAllNotes, statusHistory, updateLead, archiveLead, unarchiveLead, refreshNotes } = useLeadsContext();
   const { archivedLeads, refreshLeads } = useLeadsContext();
   const lead = allLeads.find(l => l.id === id) || archivedLeads.find(l => l.id === id);
 
@@ -112,31 +112,34 @@ export default function LeadDetail() {
     toast.success("Lead bijgewerkt");
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!newNoteText.trim()) return;
     const result = noteSchema.safeParse({ note_text: newNoteText, note_type: newNoteType });
     if (!result.success) {
       toast.error(result.error.errors[0].message);
       return;
     }
-    addNote(newNoteText, newNoteType);
+    await addNote(newNoteText, newNoteType);
+    refreshNotes();
     setNewNoteText("");
     setNewNoteType("general");
     setShowNoteForm(false);
     toast.success("Notitie toegevoegd");
   };
 
-  const handleUpdateNote = (noteId: string) => {
+  const handleUpdateNote = async (noteId: string) => {
     if (!editNoteText.trim()) return;
-    updateNote(noteId, editNoteText);
+    await updateNote(noteId, editNoteText);
+    refreshNotes();
     setEditingNoteId(null);
     setEditNoteText("");
     toast.success("Notitie bijgewerkt");
   };
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = async (noteId: string) => {
     if (confirm("Weet je zeker dat je deze notitie wilt verwijderen?")) {
-      deleteNote(noteId);
+      await deleteNote(noteId);
+      refreshNotes();
       toast.success("Notitie verwijderd");
     }
   };
@@ -450,7 +453,7 @@ export default function LeadDetail() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => togglePin(note.id)}>
+                        <DropdownMenuItem onClick={async () => { await togglePin(note.id); refreshNotes(); }}>
                           <Pin className="mr-2 h-4 w-4" />
                           {note.is_pinned ? "Losmaken" : "Vastpinnen"}
                         </DropdownMenuItem>
